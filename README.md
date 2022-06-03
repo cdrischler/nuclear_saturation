@@ -8,6 +8,7 @@ We use Bayesian model mixing to quantify the uncertainties in the empirical nucl
 python3 -m venv env_satpoint
 source env_satpoint/bin/activate
 pip3 install -r requirements.txt
+ipython kernel install --name "satpoint" --user
 jupyter-notebook&
 # deactivate # when the job is done
 ```
