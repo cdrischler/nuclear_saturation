@@ -29,6 +29,15 @@ jupyter-notebook&
 * [From finite nuclei to the nuclear liquid drop: Leptodermous expansion based on self-consistent mean-field theory][Reinhard:2005]
 * [Nuclear charge and neutron radii and nuclear matter: trend analysis][Reinhard:2016]
 
+### Kernel Density Estimation (KDE)
+* https://stackabuse.com/kernel-density-estimation-in-python-using-scikit-learn/
+* https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html
+* https://towardsdatascience.com/simple-example-of-2d-density-plots-in-python-83b83b934f67
+* https://www.python-graph-gallery.com/2d-density-plot/
+* https://seaborn.pydata.org/generated/seaborn.kdeplot.html
+* https://stackoverflow.com/questions/4150171/how-to-create-a-density-plot-in-matplotlib
+* https://www.delftstack.com/howto/matplotlib/matplotlib-density-plot/
+
 [McDonnell:2015]:https://arxiv.org/abs/1501.03572
 [Schunck:2020]:https://arxiv.org/abs/2003.12207
 [Drischler:2016]:https://arxiv.org/abs/1510.06728
