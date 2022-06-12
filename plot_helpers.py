@@ -115,7 +115,7 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', show_scatter=False
     #print(cov)
 
     if show_scatter:
-        scat_color = darken_color(facecolor, 0.5)
+        scat_color = "k" #darken_color(facecolor, 0.5)
         ax.plot(x, y, ls='', marker='.', markersize=0.6, color=scat_color)
 
     return confidence_ellipse_mean_cov(mean, cov, ax, n_std=n_std, facecolor=facecolor, **kwargs)
