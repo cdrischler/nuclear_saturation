@@ -28,6 +28,7 @@ jupyter-notebook&
 * [Insights into nuclear saturation density from parity violating electron scattering][Horowitz:2020]
 * [From finite nuclei to the nuclear liquid drop: Leptodermous expansion based on self-consistent mean-field theory][Reinhard:2005]
 * [Nuclear charge and neutron radii and nuclear matter: trend analysis][Reinhard:2016]
+* Christian's [review article][Drischler2021:AnnRev]
 
 ### Kernel Density Estimation (KDE)
 * https://stackabuse.com/kernel-density-estimation-in-python-using-scikit-learn/
@@ -50,3 +51,4 @@ jupyter-notebook&
 [Horowitz:2020]:https://arxiv.org/abs/2007.07117
 [Reinhard:2005]:https://arxiv.org/abs/nucl-th/0510039
 [Reinhard:2016]:https://arxiv.org/abs/1601.06324
+[Drischler2021:AnnRev]:https://www.annualreviews.org/doi/10.1146/annurev-nucl-102419-041903
