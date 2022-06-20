@@ -1,0 +1,21 @@
+
+      May 8, 2022
+      
+      The subdirectory "Saturation" was created with the sole purpose
+      of quantifying the predictions of the various models optimized
+      by Wei-Chia. To so, the process is as follows:
+
+      (a) In subdirectory WeiChia/RMFModels/FSUGarnet execute the
+          script Sampling.com to create 10,000 configurations that
+          are distributed according to the covariance matrix.
+      (b) Copy the Sampling.out file to the subdirectory:
+          Saturation/FSUGarnet and execute ../Saturation.x   
+          This step simple replaces kFermi with the density.
+      (c) Input averages, std-deviations, and correlation coefficient
+          for the density and E/A in Covariance.com to generate the 39% 
+	  and 95% confidence ellipses.
+
+	  The reference to FSUGarnet above is just as an example. 
+	  Do the same for each covariance EDF of interest.
+
+
