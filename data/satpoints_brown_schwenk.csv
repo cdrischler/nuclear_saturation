@@ -1,0 +1,16 @@
+# nuclear saturation points for Skyrme interactions
+# data from Table I in Brown & Schwenk, https://arxiv.org/abs/1311.3957
+# There's a typo in the row with SQMC700
+# data based on Table VII in https://arxiv.org/abs/1202.3902
+# Alex Brown changed the underlying interactions, so this table should refer only to the work by Dutra et al.
+Label,rho0,E/A
+KDE0v1,0.165,-16.23
+NRAPR,0.161,-15.85
+Ska25,0.161,-16.07
+Ska35,0.158,-16.08
+SKRA,0.159,-15.78
+SkT1,0.161,-15.98
+SkT2,0.161,-15.94
+SkT3,0.161,-15.95
+SQMC700,0.171,-15.49
+SV-sym32,0.159,-15.94
