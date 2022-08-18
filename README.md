@@ -39,6 +39,10 @@ jupyter-notebook&
 * https://stackoverflow.com/questions/4150171/how-to-create-a-density-plot-in-matplotlib
 * https://www.delftstack.com/howto/matplotlib/matplotlib-density-plot/
 
+### Bayesian analysis
+* https://arxiv.org/pdf/1408.4050.pdf
+* https://onlinelibrary.wiley.com/doi/pdfdirect/10.1111/oik.05985?casa_token=jGGeFeawTd0AAAAA:a07xpNlzHR0iWdAycmpda4YOC617z1783_BFd9HEK9mqjRlSqJ8uKd54k7OGYPWyYgzEuDL1tY-H-5FH
+
 [McDonnell:2015]:https://arxiv.org/abs/1501.03572
 [Schunck:2020]:https://arxiv.org/abs/2003.12207
 [Drischler:2016]:https://arxiv.org/abs/1510.06728
