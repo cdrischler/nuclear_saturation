@@ -3,7 +3,8 @@ import matplotlib as mpl
 from matplotlib.patches import Ellipse
 import matplotlib.transforms as transforms
 import matplotlib.pyplot as plt
-
+import matplotlib.patches as mpatches
+from matplotlib.legend_handler import HandlerPatch
 
 cm=1./2.54
 
@@ -30,11 +31,32 @@ mpl.rc('savefig', transparent=False, bbox='tight', pad_inches=0.05, format='pdf'
 color_68 = 'darkgrey'   # color for 1 sigma bands
 color_95 = 'lightgrey'  # color for 2 sigma bands
 colors = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33', '#a65628', '#f781bf']  # 8 colors
-colorset = ['b', 'r', 'c', 'darkslateblue', 'orange', 'darkcyan', 'darkgrey', 'lime', 'aqua', 'g', 'magenta', 'k']
+colorset = ['b', 'r', 'darkcyan', 'darkslateblue', 'orange', 'darkgrey', 'lime', 'aqua', 'g', 'magenta', 'k']  +  colors
 markers = {'0': "*", '2': "o", '3': "s", '4': "D", '5': "p" }
 
+flatui = ["#9b59b6", "#3498db", "#95a5a6", "#e74c3c", "#34495e", "#2ecc71"]
+[purple, blue, grey, red, darkblue, green] = flatui
+orange = '#f39c12'
+black = 'k'
+yellow = 'yellow'
 
-def confidence_ellipse_mean_cov(mean, cov, ax, n_std=3.0, facecolor='none', **kwargs):
+
+def highlight_saturation_density(ax, n0 = 0.164, n0_std = 0.007, zorder=-1, alpha=0.5, color='0.6'):
+    ax.axvspan(n0-n0_std, n0+n0_std, zorder=zorder, alpha=alpha, color=color)
+
+
+class HandlerEllipse(HandlerPatch):
+    def create_artists(self, legend, orig_handle,
+                       xdescent, ydescent, width, height, fontsize, trans):
+        center = 0.5 * width - 0.5 * xdescent, 0.5 * height - 0.5 * ydescent
+        p = mpatches.Ellipse(xy=center, width=width + xdescent,
+                             height=height + ydescent)
+        self.update_prop(p, orig_handle, legend)
+        p.set_transform(trans)
+        return [p]
+
+
+def confidence_ellipse_mean_cov(mean, cov, ax, n_std=3.0, facecolor='none', label="", **kwargs):
     """
     Create a plot of the covariance confidence ellipse of *x* and *y*.
 
@@ -61,10 +83,10 @@ def confidence_ellipse_mean_cov(mean, cov, ax, n_std=3.0, facecolor='none', **kw
     ell_radius_x = np.sqrt(1 + pearson)
     ell_radius_y = np.sqrt(1 - pearson)
     ellipse = Ellipse((0, 0),
-        width=ell_radius_x * 2,
-        height=ell_radius_y * 2,
-        facecolor=facecolor,
-        **kwargs)
+                      width=ell_radius_x * 2,
+                      height=ell_radius_y * 2,
+                      facecolor=facecolor, label=label,
+                      **kwargs)
 
     # Calculating the standard deviation of x from
     # the square root of the variance and multiplying
@@ -81,7 +103,8 @@ def confidence_ellipse_mean_cov(mean, cov, ax, n_std=3.0, facecolor='none', **kw
     ellipse.set_transform(transf + ax.transData)
     return ax.add_patch(ellipse)
 
-def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', show_scatter=False, **kwargs):
+
+def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', show_scatter=False, label="", **kwargs):
     """
     Create a plot of the covariance confidence ellipse of *x* and *y*.
 
@@ -115,10 +138,11 @@ def confidence_ellipse(x, y, ax, n_std=3.0, facecolor='none', show_scatter=False
     #print(cov)
 
     if show_scatter:
-        scat_color = "k" #darken_color(facecolor, 0.5)
+        scat_color = darken_color(facecolor, 0.5)
         ax.plot(x, y, ls='', marker='.', markersize=0.6, color=scat_color)
 
-    return confidence_ellipse_mean_cov(mean, cov, ax, n_std=n_std, facecolor=facecolor, **kwargs)
+    return confidence_ellipse_mean_cov(mean, cov, ax, n_std=n_std, facecolor=facecolor, label=label, **kwargs)
+
 
 def lighten_color(color, amount=0.5):
     """
@@ -139,6 +163,7 @@ def lighten_color(color, amount=0.5):
     c = colorsys.rgb_to_hls(*mc.to_rgb(c))
     return colorsys.hls_to_rgb(c[0], 1 - amount * (1 - c[1]), c[2])
 
+
 def darken_color(color, amount=0.5):
     """
     Darken the given color by multiplying (1-luminosity) by the given amount.
@@ -151,21 +176,16 @@ def darken_color(color, amount=0.5):
     """
     return lighten_color(color, 1./amount)
 
-def plot_empirical_saturation(ax=None, facecolor='lightgray', edgecolor='gray', alpha=0.4, zorder=9, **kwargs):
+
+def plot_rectangle(center, uncertainty, ax=None, **kwargs):
     if ax is None:
         ax = plt.gca()
     from matplotlib.patches import Rectangle
-    # From Drischler et al. (2017), arXiv:1710.08220
-    n0 = 0.164 # fm**-3
-    n0_std = 0.007 # fm**-3
-    y0 = -15.9 # MeV
-    y0_std = 0.4  # MeV; errors are added linearly
-    # y0_std = np.sqrt(0.37 ** 2 + 0.2 ** 2) # MeV; use this to add them in quadrature
-    left = n0 - n0_std
-    right = n0 + n0_std
+    left = center[0] - uncertainty[0]
+    right = center[0] + uncertainty[0]
     rect = Rectangle(
-        (left, y0 - y0_std), width=right - left, height=2 * y0_std,
-        facecolor=facecolor, edgecolor=edgecolor, alpha=alpha, zorder=zorder, **kwargs
+        (left, center[1] - uncertainty[1]), width=right-left,
+        height=2*uncertainty[1], **kwargs
     )
     ax.add_patch(rect)
     return ax
