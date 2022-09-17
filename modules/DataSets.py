@@ -58,8 +58,11 @@ class GenericDataSet(DataSet):
     def __add__(self, other):
         return GenericDataSet(filenames=self.filenames + other.filenames)
 
-    def sample(self, num_points=1, replace=True):
-        return self.data_frame.sample(num_points, replace=replace)
+    def sample(self, df=None, num_points=1, replace=True):
+        ret = self.data_frame.sample(num_points, replace=replace)
+        if df is not None:
+            ret = pd.concat((df, ret))
+        return ret
 
     def plot(self, ax=None, plot_scatter=True, plot_box_estimate=False, marker_size=8):
         if ax is None:
@@ -137,16 +140,20 @@ class NormDistDataSet(DataSet):
         cov = np.array([[row["sigma rho0"]**2, offdiag], [offdiag, row["sigma E/A"]**2]])
         return mean, cov
 
-    def sample(self, num_distr=1, num_pts_per_distr=5, sample_all=True, replace=True):
+    def sample(self, df=None, num_distr=1, num_pts_per_distr=1, sample_all=False, replace=True):
         data = self.data_frame if sample_all else self.data_frame.sample(num_distr, replace=replace)
         ret = pd.DataFrame()
         for irow, row in data.iterrows():
             mean, cov = NormDistDataSet.from_row_to_mean_cov(row)
             samples = multivariate_normal.rvs(mean=mean, cov=cov, size=num_pts_per_distr)
+            samples = np.atleast_2d(samples)
             result_row = pd.DataFrame(data=samples, columns=("rho0", "E/A"))
-            for lbl in ("class", "label"):
+            for lbl in ("class", "label", "file"):
                 result_row[lbl] = row[lbl]
             ret = pd.concat((ret, result_row))
+
+        if df is not None:
+            ret = pd.concat((df, ret))
         return ret
 
     def plot(self, ax=None, n_std=3, marker_size=8):
@@ -195,15 +202,18 @@ class KernelDensityEstimate(DataSet):
             data = pd.concat([data, data_read])
         return files, data
 
-    def sample(self, num_distr=1, num_pts_per_distr=5, sample_all=True, replace=True):
-        class_lbl = [f"{self.set_specifier}:{id}" for id in np.random.choice(np.arange(1, 4), num_distr, replace=replace)]
+    def sample(self, df=None, num_distr=1, num_pts_per_distr=1, sample_all=True, replace=True):
+        max_num = 4 if sample_all else num_distr
+        class_lbl = [f"{self.set_specifier}:{id}" for id in np.random.choice(np.arange(1, max_num), num_distr, replace=replace)]
         ret = pd.DataFrame()
         for cls in class_lbl:
-            df = self.data_frame[self.data_frame["class"] == cls]
-            samples = df.sample(num_pts_per_distr, replace=replace)
+            tmp = self.data_frame[self.data_frame["class"] == cls]
+            samples = tmp.sample(num_pts_per_distr, replace=replace)
             for lbl in ("class", "label"):
                 samples[lbl] = cls
             ret = pd.concat((ret, samples))
+        if df is not None:
+            ret = pd.concat((df, ret))
         return ret
 
     def plot(self, ax=None, levels=86, num_distr=1, fill=True, plot_scatter=False, marker_size=8):

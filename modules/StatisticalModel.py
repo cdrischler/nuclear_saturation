@@ -72,8 +72,8 @@ class StatisticalModel:
         ret["nu"] = self.prior_params["nu"] + self.n
         ret["mu"] = np.array([self.prior_params["kappa"], self.n]) @ np.array([self.prior_params["mu"], self.sample_mean]) /ret["kappa"]
         diff = self.sample_mean - self.prior_params["mu"]
-        ret["Lambda"] = self.prior_params["Lambda"] + self.sum_squared_dev + (self.prior_params["kappa"] * self.n / ret["kappa"]) * np.outer(diff, diff)
-        StatisticalModel._validate_matrix(ret["Lambda"], raise_error=True)
+        ret["Psi"] = self.prior_params["Psi"] + self.sum_squared_dev + (self.prior_params["kappa"] * self.n / ret["kappa"]) * np.outer(diff, diff)
+        StatisticalModel._validate_matrix(ret["Psi"], raise_error=True)
         return ret
 
     def sample_mu_Sigma(self, num_samples=1, based_on="posterior", random_state=None):
@@ -91,8 +91,8 @@ class StatisticalModel:
         if based_on not in ("posterior", "prior"):
             raise ValueError(f"Got unknown prior/posterior request '{based_on}'.")
         params = self.posterior_params if based_on=="posterior" else self.prior_params
-        Sigmas = invwishart.rvs(df=params["nu"], scale=params["Lambda"], size=num_samples, random_state=None)
-        # TODO: note that `params["Lambda"]` vs `np.linalg.inv(params["Lambda"])` in the previous line (see also TODO below)
+        Sigmas = invwishart.rvs(df=params["nu"], scale=params["Psi"], size=num_samples, random_state=None)
+        # TODO: note that `params["Psi"]` vs `np.linalg.inv(params["Psi"])` in the previous line (see also TODO below)
         if num_samples == 1:
             Sigmas = np.expand_dims(Sigmas, 0)
         mus = np.array([multivariate_normal.rvs(mean=params["mu"], cov=Sigma/params["kappa"],
@@ -134,7 +134,7 @@ class StatisticalModel:
                 return Sigmas  # Eq. (255) in Murphy's notes #TODO: understand here why Murphy and Gelman have the matrix inverse but not Wikipedia
         else:  # "predictive_y" or "marginal_mu"
             extra_factor = (params["kappa"]+1) if kind=="predictive_y" else 1.
-            shape_matrix = params["Lambda"]*extra_factor/(params["kappa"]*(params["nu"]-self.d+1))
+            shape_matrix = params["Psi"]*extra_factor/(params["kappa"]*(params["nu"]-self.d+1))
             if validate:
                 StatisticalModel._validate_matrix(shape_matrix, raise_error=True)
             return multivariate_t.rvs(df=params["nu"] - self.d + 1,
@@ -158,8 +158,7 @@ class StatisticalModel:
     def sanity_check(self, num_samples=10000, based_on="posterior", do_print=False, quantile_values=None, atol=5e-2, rtol=0.):
         """
         Checks that the quantiles obtained from sampling the (analytic) posterior predictive matches the
-        brute-force calculation described in described in
-        https://en.wikipedia.org/wiki/Normal-inverse-Wishart_distribution#Posterior_distribution_of_the_parameters
+        brute-force calculation described in https://en.wikipedia.org/wiki/Normal-inverse-Wishart_distribution#Posterior_distribution_of_the_parameters
 
         :param num_samples: number of samples
         :param based_on: either using the prior or posterior

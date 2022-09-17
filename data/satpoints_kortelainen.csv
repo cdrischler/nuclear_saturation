@@ -1,6 +1,6 @@
 # nuclear saturation points for Skyrme interactions
 # data from Table IV in https://arxiv.org/pdf/1312.1746.pdf
-Label,rho0,E/A
+label,rho0,E/A
 SLy4,0.16,-15.972
 UNEDF0,0.16053,-16.056
 UNEDF1,0.15871,-15.8

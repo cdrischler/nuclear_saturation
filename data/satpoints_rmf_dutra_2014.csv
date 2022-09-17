@@ -1,6 +1,6 @@
 # nuclear saturation points for RMF models
 # data from Table VI in https://arxiv.org/abs/1405.3633v2
-Label,rho0,E/A
+label,rho0,E/A
 BKA22,0.147,-15.91
 BKA24,0.147,-15.95
 BSR11,0.147,-16.08
