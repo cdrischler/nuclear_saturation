@@ -64,7 +64,8 @@ class GenericDataSet(DataSet):
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, plot_scatter=True, plot_box_estimate=False, marker_size=8):
+    def plot(self, ax=None, plot_scatter=True, plot_box_estimate=False, marker_size=8,
+             add_legend=True, add_axis_labels=True):
         if ax is None:
             ax = plt.gca()
 
@@ -81,9 +82,10 @@ class GenericDataSet(DataSet):
                 ax.scatter(self.data_frame.iloc[idxs]["rho0"], self.data_frame.iloc[idxs]["E/A"],
                            #color="k",
                            s=marker_size, label=clbls)
-
-        super().set_axes_labels(ax)
-        super().legend(ax)
+        if add_axis_labels:
+            super().set_axes_labels(ax)
+        if add_legend:
+            super().legend(ax)
 
     def box_estimate(self, print_result=False):
         result = dict()
@@ -156,7 +158,7 @@ class NormDistDataSet(DataSet):
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, n_std=3, marker_size=8):
+    def plot(self, ax=None, n_std=3, marker_size=8, add_legend=True, add_axis_labels=True):
         if ax is None:
             ax = plt.gca()
         for irow, row in self.data_frame.iterrows():
@@ -166,8 +168,10 @@ class NormDistDataSet(DataSet):
                                         facecolor=colorset[irow],
                                         label=f'{row["label"]} (${n_std} \sigma $)')
 
-        super().set_axes_labels(ax)
-        super().legend(ax)
+        if add_axis_labels:
+            super().set_axes_labels(ax)
+        if add_legend:
+            super().legend(ax)
 
 
 class KernelDensityEstimate(DataSet):
@@ -216,7 +220,8 @@ class KernelDensityEstimate(DataSet):
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, levels=86, num_distr=1, fill=True, plot_scatter=False, marker_size=8):
+    def plot(self, ax=None, levels=86, num_distr=1, fill=True, plot_scatter=False, marker_size=8,
+             add_legend=True, add_axis_labels=True):
         if ax is None:
             ax = plt.gca()
 
@@ -235,6 +240,8 @@ class KernelDensityEstimate(DataSet):
             if plot_scatter:
                 ax.scatter(x=self.data_frame[mask]["rho0"], y=self.data_frame[mask]["E/A"], label="test")
 
-        super().set_axes_labels(ax)
-        super().legend(ax)
+        if add_axis_labels:
+            super().set_axes_labels(ax)
+        if add_legend:
+            super().legend(ax)
 #%%
