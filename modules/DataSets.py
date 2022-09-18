@@ -158,7 +158,7 @@ class NormDistDataSet(DataSet):
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, n_std=3, marker_size=8, add_legend=True, add_axis_labels=True):
+    def plot(self, ax=None, n_std=2, marker_size=8, add_legend=True, add_axis_labels=True):
         if ax is None:
             ax = plt.gca()
         for irow, row in self.data_frame.iterrows():
@@ -220,12 +220,12 @@ class KernelDensityEstimate(DataSet):
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, levels=86, num_distr=1, fill=True, plot_scatter=False, marker_size=8,
+    def plot(self, ax=None, levels=86.47, num_distr=1, fill=True, plot_scatter=False, marker_size=8,
              add_legend=True, add_axis_labels=True):
         if ax is None:
             ax = plt.gca()
 
-        levels = 1. - np.atleast_1d(levels)/100.
+        levels = 1. - np.atleast_1d(levels)/100.  #TODO: input `levels` could be given in n_std
         if fill:
             levels = np.append(levels, 1.)
         num_sample = range(1, num_distr+1) if num_distr else range(1, 3+1)
