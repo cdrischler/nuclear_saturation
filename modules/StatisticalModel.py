@@ -158,6 +158,7 @@ class StatisticalModel:
         :param return_predictive_only: returns prior/posterior predictive samples but not the associated samples of (mu, Sigma)
         :param random_state: state of random number generator
         :return: `num_samples` samples in an array with columns associated with (density, energy/particle)
+        or pandas DataFrame with full set of results (predictive_y, my, Sigma) depending on the argument `return_predictive_only`
         """
         mus, Sigmas = self.sample_mu_Sigma(num_samples=num_samples_mu_Sigma, based_on=based_on, random_state=random_state)
         predictive = np.array([multivariate_normal.rvs(mean=mu, cov=Sigma, size=num_samples) for mu, Sigma in zip(mus, Sigmas)])
