@@ -65,4 +65,4 @@ class EftPredictions:
         # ax.set_xlabel('Saturation Density $n_0$ [fm$^{-3}$]')
         # ax.set_ylabel('Saturation Energy $E_0/A$ [MeV]')
         # ax.set_title("Empirical saturation box")
-        ax.legend(ncol=2, loc="upper center", prop={'size': 6})  #TODO: don't overwrite settings from DataSets
+        # ax.legend(ncol=2, loc="upper center", prop={'size': 6})  #TODO: don't overwrite settings from DataSets
