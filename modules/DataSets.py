@@ -1,19 +1,48 @@
 import sys; sys.path.append("./modules")
 from abc import ABC, abstractmethod
-from plot_helpers import plot_rectangle, confidence_ellipse_mean_cov, colors, colorset, flatui
+from plot_helpers import plot_rectangle, confidence_ellipse_mean_cov, colors, colorset
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import re
+import os
 import glob
+import wget
+import py7zr
 import pandas as pd
+import corner
 from scipy.stats import multivariate_normal
+from StatisticalModel import StatisticalModel
+from dataclasses import dataclass, field
 
 
 class DataSet(ABC):
     def __init__(self, filenames):
         self.filenames = [filenames] if isinstance(filenames, str) else filenames
         self.data_frame = None
+
+    def get_data_frame(self, exclude=None, exclude_in_col="label"):
+        if exclude is None:
+            return self.data_frame
+        else:
+            return self.data_frame.loc[~self.data_frame[exclude_in_col].isin(np.atleast_1d(exclude))]
+
+    def get_statistical_model(self, exclude=None, num_points=1, num_pts_per_distr=1,
+                              num_distr="all", replace=True, quantities=None, prior_params=None, **kwargs):
+        if isinstance(self, GenericDataSet):
+            data = self.get_data_frame(exclude=exclude)
+        else:
+            data = self.sample(df=None, num_points=num_points, num_distr=num_distr,
+                               num_pts_per_distr=num_pts_per_distr, replace=replace, exclude=exclude)
+        return StatisticalModel(data=data, quantities=quantities, prior_params=prior_params)
+
+    def sample_from_model(self, df=None, num_samples=1, kind="predictive_y", based_on="posterior", random_state=None, validate=True, **kwargs):
+        model = self.get_statistical_model(**kwargs)
+        ret = model.sample(num_samples=num_samples, kind=kind, based_on=based_on, random_state=random_state, validate=validate)
+        ret = pd.DataFrame(data=ret, columns=["rho0", "E/A"])
+        if df is not None:
+            ret = pd.concat((df, ret))
+        return ret
 
     @staticmethod
     def read_csv_files(filenames, comment="#", data_path="data", dtype=None,
@@ -30,11 +59,11 @@ class DataSet(ABC):
         return data
 
     @abstractmethod
-    def sample(self):
+    def sample(self, **kwargs):
         pass
 
     @abstractmethod
-    def plot(self):
+    def plot(self, **kwargs):
         pass
 
     @staticmethod
@@ -58,28 +87,33 @@ class GenericDataSet(DataSet):
     def __add__(self, other):
         return GenericDataSet(filenames=self.filenames + other.filenames)
 
-    def sample(self, df=None, num_points=1, replace=True):
-        ret = self.data_frame.sample(num_points, replace=replace)
+    def sample(self, df=None, num_points=1, replace=True, exclude=None, **kwargs):
+        ret = self.get_data_frame(exclude=exclude)
+        if isinstance(num_points, int):
+            ret = self.get_data_frame(exclude=exclude).sample(num_points, replace=replace)
+        elif num_points != "all":
+            raise ValueError(f"'num_points has to be int or 'all', got {num_points}")
         if df is not None:
             ret = pd.concat((df, ret))
         return ret
 
     def plot(self, ax=None, plot_scatter=True, plot_box_estimate=False, marker_size=8,
-             add_legend=True, add_axis_labels=True):
+             add_legend=True, add_axis_labels=True, exclude=None, **kwargs):
         if ax is None:
             ax = plt.gca()
 
         if plot_box_estimate:
-            res = self.box_estimate()
+            res = self.box_estimate(exclude=exclude)
             center_uncert = [[res["rho0"][i], res["E/A"][i]] for i in range(2)]
             plot_rectangle(center_uncert[0], center_uncert[1], ax=ax,
                            facecolor='lightgray', edgecolor='gray',
-                           alpha=0.4, zorder=9)
+                           alpha=0.4, zorder=-5)
 
         if plot_scatter:
-            for clbls in self.data_frame["class"].unique():
-                idxs = np.where(self.data_frame["class"] == clbls)
-                ax.scatter(self.data_frame.iloc[idxs]["rho0"], self.data_frame.iloc[idxs]["E/A"],
+            dframe = self.get_data_frame(exclude=exclude)
+            for clbls in dframe["class"].unique():
+                idxs = np.where(dframe["class"] == clbls)
+                ax.scatter(dframe.iloc[idxs]["rho0"], dframe.iloc[idxs]["E/A"],
                            #color="k",
                            s=marker_size, label=clbls)
         if add_axis_labels:
@@ -87,10 +121,10 @@ class GenericDataSet(DataSet):
         if add_legend:
             super().legend(ax)
 
-    def box_estimate(self, print_result=False):
+    def box_estimate(self, print_result=False, exclude=None):
         result = dict()
         for dim in ("rho0", "E/A"):
-            df = self.data_frame[dim]
+            df = self.get_data_frame(exclude=exclude)[dim]
             uncert = (df.max() - df.min())/2.
             central = df.min() + uncert
             result[dim] = (central, uncert)
@@ -142,8 +176,15 @@ class NormDistDataSet(DataSet):
         cov = np.array([[row["sigma rho0"]**2, offdiag], [offdiag, row["sigma E/A"]**2]])
         return mean, cov
 
-    def sample(self, df=None, num_distr=1, num_pts_per_distr=1, sample_all=False, replace=True):
-        data = self.data_frame if sample_all else self.data_frame.sample(num_distr, replace=replace)
+    def sample(self, df=None, num_points=1, num_distr="all", num_pts_per_distr=None, replace=True, exclude=None, **kwargs):
+        data = self.get_data_frame(exclude=exclude)
+        if isinstance(num_distr, int):
+            data = data.sample(num_distr, replace=replace)
+        elif num_distr != "all":
+            raise ValueError(f"'num_distr' should be int or 'all', got '{num_distr}'.")
+
+        num_pts_per_distr = num_pts_per_distr if num_pts_per_distr else num_points
+
         ret = pd.DataFrame()
         for irow, row in data.iterrows():
             mean, cov = NormDistDataSet.from_row_to_mean_cov(row)
@@ -154,19 +195,24 @@ class NormDistDataSet(DataSet):
                 result_row[lbl] = row[lbl]
             ret = pd.concat((ret, result_row))
 
+        if num_points > 0:
+            ret = ret.sample(n=num_points, replace=len(ret) < num_points)
+
         if df is not None:
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, n_std=2, marker_size=8, add_legend=True, add_axis_labels=True):
+    def plot(self, ax=None, level=0.8647, marker_size=8, add_legend=True,
+             add_axis_labels=True, exclude=None, **kwargs):
         if ax is None:
             ax = plt.gca()
-        for irow, row in self.data_frame.iterrows():
+        for irow, row in self.get_data_frame(exclude=exclude).iterrows():
             mean, cov = NormDistDataSet.from_row_to_mean_cov(row)
+            n_std = np.sqrt(-np.log(1.-level)*2)
             confidence_ellipse_mean_cov(mean=mean, cov=cov,
                                         ax=ax, n_std=n_std,
                                         facecolor=colorset[irow],
-                                        label=f'{row["label"]} (${n_std} \sigma $)')
+                                        label=f'{row["label"]} ({level:.0f}\%)')
 
         if add_axis_labels:
             super().set_axes_labels(ax)
@@ -192,56 +238,119 @@ class KernelDensityEstimate(DataSet):
             files = filenames
         else:
             if set_specifier == "schunck":
-                files = sorted(glob.glob("data/Schunck/samples?.csv"))
+                files = glob.glob("data/Schunck/samples?.csv")
+            elif set_specifier == "giuliani":
+                output_folder = "data/giuliani"
+                relative_filepath = "PlotSamples/100k_theta.dat"
+                fullpath = f"{output_folder}/{relative_filepath}"
+                if not os.path.exists(fullpath):
+                    print("trying to download Giuliani et al.'s data file from the internet (may take a while)")
+                    url = 'https://figshare.com/ndownloader/files/37611122'
+                    compressed_file = wget.download(url, out=".")
+                    with py7zr.SevenZipFile(compressed_file, 'r') as archive:
+                        # allfiles = archive.getnames()
+                        archive.extract(targets=relative_filepath, path=output_folder)
+                files = [fullpath]
             else:
                 raise ValueError(f"unknown `set_specifier` '{set_specifier}'")
 
         data = pd.DataFrame()
-        for file in files:
-            id = int(re.search(r"samples(\d)", file).group(1))
-            data_read = pd.read_csv(file, comment="#", names=("rho0", "E/A"), skiprows=0)
+        if set_specifier == "giuliani":
+            delimiter = " "
+            column_names = ["unknown0", "kf", "E/A"] + [f"unknown{i}" for i in range(1, 5+1)]
+        else:
+            delimiter = ","
+            column_names = ["rho0", "E/A"]
+
+        for file in sorted(files):
+            data_read = pd.read_csv(file, comment="#", names=column_names, skiprows=0, delimiter=delimiter)
             data_read["file"] = file
+            if set_specifier == "giuliani":
+                def calc_density(kf, g=2):
+                    return 2*g*kf**3/(6*np.pi**2)
+                data_read = pd.DataFrame(data={"rho0": calc_density(data_read["kf"]),
+                                               "E/A": data_read["E/A"]})
+                id = 1
+            else:
+                id = int(re.search(r"samples(\d)", file).group(1))
+
             data_read["class"] = f"{set_specifier}:{id}"
             data_read["label"] = data_read["class"]
             data = pd.concat([data, data_read])
         return files, data
 
-    def sample(self, df=None, num_distr=1, num_pts_per_distr=1, sample_all=True, replace=True):
-        max_num = 4 if sample_all else num_distr
-        class_lbl = [f"{self.set_specifier}:{id}" for id in np.random.choice(np.arange(1, max_num), num_distr, replace=replace)]
+    def sample(self, df=None, num_points=1, num_distr="all", num_pts_per_distr=None,
+               replace=True, exclude=None, **kwargs):
+        class_lbl = self.data_frame["class"].unique()
+        if isinstance(num_distr, int):
+            class_lbl = np.random.choice(class_lbl, num_distr, replace=replace)
+        elif num_distr != "all":
+            raise ValueError(f"'num_distr' should be int or 'all', got '{num_distr}'.")
+
+        num_pts_per_distr = num_pts_per_distr if num_pts_per_distr else num_points
         ret = pd.DataFrame()
+        dframe_filtered = self.get_data_frame(exclude=exclude)
         for cls in class_lbl:
-            tmp = self.data_frame[self.data_frame["class"] == cls]
+            tmp = dframe_filtered[dframe_filtered["class"] == cls]
             samples = tmp.sample(num_pts_per_distr, replace=replace)
             for lbl in ("class", "label"):
                 samples[lbl] = cls
             ret = pd.concat((ret, samples))
+
+        if num_points > 0:
+            ret = ret.sample(n=num_points, replace=len(ret) < num_points)
+
         if df is not None:
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, levels=86.47, num_distr=1, fill=True, plot_scatter=False, marker_size=8,
-             add_legend=True, add_axis_labels=True):
+    def plot(self, ax=None, level=0.8647, num_distr=1, fill=True, plot_scatter=False, marker_size=8,
+             add_legend=True, add_axis_labels=True, exclude=None, use_seaborn=False, **kwargs):
         if ax is None:
             ax = plt.gca()
 
-        levels = 1. - np.atleast_1d(levels)/100.  #TODO: input `levels` could be given in n_std
-        if fill:
-            levels = np.append(levels, 1.)
-        num_sample = range(1, num_distr+1) if num_distr else range(1, 3+1)
-        for isample in num_sample:
-            mask = self.data_frame["class"] == f"{self.set_specifier}:{isample}"
-            sns.kdeplot(ax=ax, x=self.data_frame[mask]["rho0"], y=self.data_frame[mask]["E/A"], fill=fill, levels=levels,
-                        label=f"Schunck set {isample}" + f" ({(1-levels[0])*100:.0f}\%)",
-                        legend=True,
-                        color=colors[-isample])
-            # TODO: sns.kdeplot() seems to have issues with displaying the handles in legends
+        for icls, cls in enumerate(self.data_frame["class"].unique()[:num_distr]):
+            dframe_filtered = self.get_data_frame(exclude=exclude)
+            mask = dframe_filtered["class"] == cls
+            if use_seaborn:
+                levels = 1. - np.atleast_1d(level)
+                if fill:
+                    levels = np.append(levels, 1.)
+                sns.kdeplot(ax=ax, x=dframe_filtered[mask]["rho0"], y=dframe_filtered[mask]["E/A"],
+                            fill=fill, levels=levels,
+                            label=f"{cls} ({(1-levels[0])*100:.0f}\%)",
+                            legend=True,
+                            color=colors[-icls])
+                # TODO: sns.kdeplot() seems to have issues with displaying the handles in legends
+            else:
+                corner.hist2d(x=dframe_filtered[mask]["rho0"].to_numpy(),
+                              y=dframe_filtered[mask]["E/A"].to_numpy(),
+                              bins=20, range=None, weights=None,
+                              levels=[level], smooth=None, ax=ax, color=colors[-icls-2],
+                              quiet=False, plot_datapoints=plot_scatter, plot_density=True,
+                              plot_contours=True, no_fill_contours=False, fill_contours=fill,
+                              contour_kwargs=None, contourf_kwargs=None, data_kwargs=None,
+                              pcolor_kwargs=None, new_fig=False)
 
-            if plot_scatter:
-                ax.scatter(x=self.data_frame[mask]["rho0"], y=self.data_frame[mask]["E/A"], label="test")
+            #if plot_scatter:
+            #    ax.scatter(x=dframe_filtered[mask]["rho0"], y=dframe_filtered[mask]["E/A"], label="scatter")
 
         if add_axis_labels:
             super().set_axes_labels(ax)
         if add_legend:
             super().legend(ax)
+
+
+@dataclass
+class DataSetSampleConfig:
+    data_set: DataSet
+    sample_from_model: bool = False
+    sample_kwargs: dict = field(default_factory=lambda: dict(exclude=None, num_points=1, num_distr="all"))
+    sample_from_model_kwargs: dict = field(default_factory=lambda: dict(num_samples=1000, kind="predictive_y",
+                                                                        based_on="posterior", validate=False))
+
+@dataclass
+class Scenario:
+    label: str
+    configs: list
 #%%

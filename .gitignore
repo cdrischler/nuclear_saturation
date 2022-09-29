@@ -129,6 +129,9 @@ dmypy.json
 .pyre/
 
 # additional
+**/pdf
+data/giuliani/*
 *.pdf
 *.png
 **/.DS_Store
+*.7z

@@ -8,16 +8,19 @@ from plot_helpers import cm
 
 
 class EftPredictions:
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, show_result=False):
         filename = filename if filename else "data/satpoint_predicted.csv"
         self.data = self.read_data(filename)
-        self.model, self.trace = self.fit()
+        self.model, self.trace = self.fit(show_result=show_result)
+        self.x_validate = np.linspace(0.14, 0.20, 10)
+        self.posterior_predictive_sampled = self.posterior_predictive(self.x_validate)
 
     def read_data(self, filename):
         data = pd.read_csv(filename)
         return data[((data["method"] == "MBPT") & (data["mbpt_order"] == 4)) | (data["method"] == "MBPT*")]
 
-    def fit(self, show_result=True):
+    def fit(self, draws=10000, tune=2000, return_inferencedata=False, target_accept=.95, show_result=True):
+        print("Performing Bayesian linear regression on EFT predictions")
         with pm.Model() as model:
             x_data = pm.Data("x_data", self.data["n0"])
             beta_0 = pm.Normal("beta_0", mu=1.5, sd=1)
@@ -25,13 +28,15 @@ class EftPredictions:
             sigma = pm.InverseGamma("sigma", alpha=6, beta=5)
             y = pm.Normal('y', mu=beta_0 + beta_1 * x_data, sd=sigma, observed=self.data["En0"])
 
-            step = pm.NUTS(target_accept=.95)
-            trace = pm.sample(draws=10000, tune=2000, step=step, return_inferencedata=False) # , nuts_kwargs=dict(target_accept=0.90))
-            pm.plot_trace(trace, ["beta_0", "beta_0", "sigma"])
+            step = pm.NUTS(target_accept=target_accept)
+            trace = pm.sample(draws=draws, tune=tune, step=step,
+                              return_inferencedata=return_inferencedata,
+                              progressbar=True)  # , nuts_kwargs=dict(target_accept=0.90))
             if show_result:
+                pm.plot_trace(trace, ["beta_0", "beta_0", "sigma"])
                 plt.show()
-            # pm.display(pm.summary(trace, round_to=2))
-            return model, trace
+                # pm.display(pm.summary(trace, round_to=2))
+        return model, trace
 
     def corner_plot(self):
         with self.model:
@@ -44,17 +49,27 @@ class EftPredictions:
                           show_titles=True, title_fmt=".4f", title_kwargs={"fontsize": 8}, fig=figure)
             return figure
 
-    def plot(self, ax=None, level=95, plot_scatter=True):
+    def posterior_predictive(self, x_validate=None):
+        if x_validate is None:
+            return self.posterior_predictive_sampled
+
+        with self.model:
+            pm.set_data({"x_data": x_validate}, model=self.model)
+            posterior_predict = pm.sample_posterior_predictive(self.trace)
+            return posterior_predict
+
+    def plot(self, ax=None, level=0.95, plot_scatter=True, x_validate=None):
         if ax is None:
             ax = plt.gca()
 
-        with self.model:
-            x_validate = np.linspace(0.14, 0.20, 10)
-            pm.set_data({"x_data": x_validate}, model=self.model)
-            posterior_predict = pm.sample_posterior_predictive(self.trace)
+        if x_validate is None:
+            x_validate = self.x_validate
+            posterior_predict = self.posterior_predictive_sampled
+        else:
+            posterior_predict = self.posterior_predictive(x_validate)
 
-        lower = np.quantile(posterior_predict["y"], q=0.5-level/200, axis=0)
-        upper = np.quantile(posterior_predict["y"], q=0.5+level/200, axis=0)
+        lower = np.quantile(posterior_predict["y"], q=0.5-level/2, axis=0)
+        upper = np.quantile(posterior_predict["y"], q=0.5+level/2, axis=0)
         ax.fill_between(x_validate, lower, upper, alpha=0.3, label=f"Coester band ({level:.0f}\%)")
         if plot_scatter:
             ax.scatter(self.data["n0"], self.data["En0"])
