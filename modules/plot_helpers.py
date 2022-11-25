@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import multivariate_t
 import matplotlib as mpl
 from matplotlib.patches import Ellipse
 import matplotlib.transforms as transforms
@@ -189,4 +190,88 @@ def plot_rectangle(center, uncertainty, ax=None, **kwargs):
     )
     ax.add_patch(rect)
     return ax
+
+
+def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=3, alpha_unit="normal_std", num_pts=10000, 
+                                plot_scatter=True, validate=True, 
+                                sym_tol=1e-12, radius_tol=1e-3, ellipse_tol=1e-12, **kwargs):
+    """
+    Plots the confidence region of the bivariate t-distribution efficiently (without sampling)
+    :param mu: mean vector (lenght-2)
+    :param Sigma: sym., pos. def. scale matrix (will be verified)
+    :param nu: degree of freedom, nu > 0
+    :param ax: matplotlib axis used for plotting
+    :param alpha: credibility level, either in decimal or in units of sigma (normal distribution) if alpha_unit="normal_std"
+    :param alpha_unit: see alpha
+    :param num_pts: number of points used for sampling (if scatter plot or validation is requested)
+    :param plot_scatter: sample and plot `num_pts` points from distribution (bool)
+    :param validate: validate the obtained confidence region by sampling `num_points` points (bool)
+    :param sym_tol: tolerance for checking for symmetric matrix
+    :param radius_tol: tolerance for checking radius in deformed coordinate system
+    :param ellipse_tol: tolerance for checking confidence ellipse coordinate system
+    :return: Nothing
+    """
+    if isinstance(alpha, list):
+        for alph in alpha:
+            plot_confregion_bivariate_t(mu=mu, Sigma=Sigma, nu=nu, 
+                                        ax=ax, alpha=alph, alpha_unit=alpha_unit, 
+                                        num_pts=num_pts, plot_scatter=plot_scatter, 
+                                        validate=validate, sym_tol=sym_tol, **kwargs)
+            plot_scatter = False
+        return
+    
+    if ax is None:
+        ax = plt.gca()
+        
+    # preparations and checks
+    mu = np.asarray(mu)
+    Sigma = np.asarray(Sigma)
+    if alpha_unit == "normal_std":
+        alpha = 1-np.exp(-alpha**2/2)
+    if alpha <= 0 or alpha > 1:
+        raise ValueError(f"alpha has to be a confidence level, got {alpha}")
+        
+    if mu.shape != (2,) or Sigma.shape != (2,2):
+        raise ValueError("requires a bivariate distribution function")
+    if nu <=0:
+        raise ValueError(f"`nu` must be positive, got {nu}")    
+    
+    # Sigma has to be symmetric and positive definite
+    stat_sym = np.abs(Sigma[0,1]-Sigma[1,0]) < sym_tol
+    if not stat_sym:
+        raise ValueError("`Sigma` has to be symmetric.")
+    try:
+        # use Cholesky decomposition to check for positive definiteness,
+        # alternative check that all eigenvalues are strictly positive
+        L = np.linalg.cholesky(Sigma)
+        # note that neither numpy's nor scipy's actually check that the matrix is symmetric,
+        # and wrong decompositions will be obtained because only the lower triangle matrix 
+        # is used by those libraries
+    except np.linalg.LinAlgError:
+        raise ValueError("`Sigma` is not positive definite.")
+
+    # get points on circle in the deformed coordinate system
+    r0 = np.sqrt(nu/(1-alpha)**(2/nu) - nu)
+    circle = r0*np.array([[np.cos(phi), np.sin(phi)] for phi in np.linspace(0, 2*np.pi,num_pts)]).T
+    
+    # gets points on final confidence ellipse and plot them
+    conf_ellipse = (L @ circle).T + mu
+    ax.plot(conf_ellipse[:,0], conf_ellipse[:,1], c="r", **kwargs)
+    
+    # plot sampling points from distribution?
+    samples = multivariate_t.rvs(mu, Sigma, df=nu, size=num_pts) if plot_scatter or validate else None
+    if plot_scatter:
+        ax.scatter(samples[:,0], samples[:,1], s=0.2)
+        
+    # check that the confidence region is legit? (very simplistic check)
+    if validate:
+        invSigma = np.linalg.inv(Sigma)
+        est_conf = np.sum([np.einsum("i,ij,j->", (point-mu), invSigma, (point-mu)) <= r0**2 for point in samples])/len(samples)
+        dev = np.linalg.norm(np.array([np.einsum("i,ij,j->", (point-mu), invSigma, (point-mu)) for point in conf_ellipse])-r0**2, 
+                             ord=np.inf)
+        err_radius = (est_conf-alpha > radius_tol)
+        err_ellipse = (dev > ellipse_tol)
+        if err_radius or err_ellipse:
+            print(err_ellipse, err_radius)
+            raise ValueError(f"Obtained confidence region not consistent. Estimated alpha={est_conf} (expected: {alpha})")
 #%%
