@@ -212,7 +212,7 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=3, alpha_unit="nor
     :return: Nothing
     """
     if isinstance(alpha, list):
-        for alph in alpha:
+        for alph in np.sort(alpha)[::-1]:
             plot_confregion_bivariate_t(mu=mu, Sigma=Sigma, nu=nu, 
                                         ax=ax, alpha=alph, alpha_unit=alpha_unit, 
                                         num_pts=num_pts, plot_scatter=plot_scatter, 
@@ -236,42 +236,56 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=3, alpha_unit="nor
     if nu <=0:
         raise ValueError(f"`nu` must be positive, got {nu}")    
     
-    # Sigma has to be symmetric and positive definite
+    # Sigma has to be symmetric...
     stat_sym = np.abs(Sigma[0,1]-Sigma[1,0]) < sym_tol
     if not stat_sym:
         raise ValueError("`Sigma` has to be symmetric.")
-    try:
-        # use Cholesky decomposition to check for positive definiteness,
-        # alternative check that all eigenvalues are strictly positive
-        L = np.linalg.cholesky(Sigma)
-        # note that neither numpy's nor scipy's actually check that the matrix is symmetric,
-        # and wrong decompositions will be obtained because only the lower triangle matrix 
-        # is used by those libraries
-    except np.linalg.LinAlgError:
+        
+    # ... and positive definite
+    lambda_, Q = np.linalg.eig(Sigma) 
+    if (lambda_ <= 0).any():
         raise ValueError("`Sigma` is not positive definite.")
-
-    # get points on circle in the deformed coordinate system
-    r0 = np.sqrt(nu/(1-alpha)**(2/nu) - nu)
-    circle = r0*np.array([[np.cos(phi), np.sin(phi)] for phi in np.linspace(0, 2*np.pi,num_pts)]).T
-    
-    # gets points on final confidence ellipse and plot them
-    conf_ellipse = (L @ circle).T + mu
-    ax.plot(conf_ellipse[:,0], conf_ellipse[:,1], c="r", **kwargs)
-    
+        
     # plot sampling points from distribution?
     samples = multivariate_t.rvs(mu, Sigma, df=nu, size=num_pts) if plot_scatter or validate else None
     if plot_scatter:
         ax.scatter(samples[:,0], samples[:,1], s=0.2)
-        
+
+    # determine radius in deformed coordinate system
+    r0 = np.sqrt(nu/(1-alpha)**(2/nu) - nu)
+    
+    # create an ellipse
+    axes_length = 2*r0*np.sqrt(lambda_)  # note that x^T Sigma^-1 x
+    angle = Q[:, 0]
+    angle = np.arctan2(angle[1], angle[0])  # compute the angle of the major axis and the x axis
+    
+    ell = Ellipse(xy=(mu[0], mu[1]),
+                  width=axes_length[0], 
+                  height=axes_length[1],
+                  angle=np.rad2deg(angle), **kwargs)
+    if "edgecolor" not in kwargs:
+        ell.set_facecolor('None')
+        ell.set_edgecolor('r')
+    ax.add_artist(ell)  
+                
     # check that the confidence region is legit? (very simplistic check)
     if validate:
+        # get points on circle in the deformed coordinate system
+        circle = r0*np.array([[np.cos(phi), np.sin(phi)] for phi in np.linspace(0, 2*np.pi,num_pts)]).T
+
+        # gets points on final confidence ellipse and plot them
+        conf_ellipse = ((Q @ np.sqrt(np.diag(lambda_))) @ circle).T + mu
+        ax.plot(conf_ellipse[:,0], conf_ellipse[:,1], c="w", ls=":", **kwargs)
+        
+        # check radius r0 and corresponding confidence interval
         invSigma = np.linalg.inv(Sigma)
         est_conf = np.sum([np.einsum("i,ij,j->", (point-mu), invSigma, (point-mu)) <= r0**2 for point in samples])/len(samples)
         dev = np.linalg.norm(np.array([np.einsum("i,ij,j->", (point-mu), invSigma, (point-mu)) for point in conf_ellipse])-r0**2, 
                              ord=np.inf)
-        err_radius = (est_conf-alpha > radius_tol)
+        err_radius = (np.abs(est_conf-alpha) > radius_tol)
         err_ellipse = (dev > ellipse_tol)
         if err_radius or err_ellipse:
             print(err_ellipse, err_radius)
-            raise ValueError(f"Obtained confidence region not consistent. Estimated alpha={est_conf} (expected: {alpha})")
+            raise ValueError(f"Obtained confidence region not consistent. Estimated alpha={est_conf:.4f} (expected: {alpha:.4f})")
+
 #%%
