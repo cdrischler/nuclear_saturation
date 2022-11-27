@@ -256,8 +256,7 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=3, alpha_unit="nor
     
     # create an ellipse
     axes_length = 2*r0*np.sqrt(lambda_)  # note that x^T Sigma^-1 x
-    angle = Q[:, 0]
-    angle = np.arctan2(angle[1], angle[0])  # compute the angle of the major axis and the x axis
+    angle = np.arctan2(Q[1, 0], Q[0, 0])  # compute the angle of the axis associated with the first eigenvalue and the x axis
     
     ell = Ellipse(xy=(mu[0], mu[1]),
                   width=axes_length[0], 
