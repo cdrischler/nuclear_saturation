@@ -225,11 +225,12 @@ class StatisticalModel:
 
         if kind == "predictive_y":  # i.e., bivariate t-distributions
             for ibon, bon in enumerate(("prior", "posterior")):
-                params = self.posterior_params if based_on==bon else self.prior_params
+                params = self.posterior_params if bon=="posterior" else self.prior_params
+                color = "b" if bon=="posterior" else "r"
                 plot_confregion_bivariate_t(ax=ax, mu=params["mu"], 
                                 Sigma=params["Psi"], nu=params["nu"], 
-                                alpha=list(range(1,n_std+1)), alpha_unit="normal_std", num_pts=1000000, 
-                                plot_scatter=plot_data, validate=validate)
+                                alpha=list(range(1,n_std+1)), alpha_unit="normal_std", num_pts=10000000, 
+                                plot_scatter=plot_data, validate=validate, edgecolor=color, facecolor="None")
         else:
             levels = levels if levels else [np.exp(-n_std**2 / 2), 1.]
             for ibon, bon in enumerate(("prior", "posterior")):

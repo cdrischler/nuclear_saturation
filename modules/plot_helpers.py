@@ -274,7 +274,7 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=3, alpha_unit="nor
 
         # gets points on final confidence ellipse and plot them
         conf_ellipse = ((Q @ np.sqrt(np.diag(lambda_))) @ circle).T + mu
-        ax.plot(conf_ellipse[:,0], conf_ellipse[:,1], c="w", ls=":", **kwargs)
+        ax.plot(conf_ellipse[:,0], conf_ellipse[:,1], c="w", ls=":") # c="g") #**kwargs)
         
         # check radius r0 and corresponding confidence interval
         invSigma = np.linalg.inv(Sigma)
@@ -285,6 +285,7 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=3, alpha_unit="nor
         err_ellipse = (dev > ellipse_tol)
         if err_radius or err_ellipse:
             print(err_ellipse, err_radius)
+            print(np.abs(est_conf-alpha), radius_tol)
             raise ValueError(f"Obtained confidence region not consistent. Estimated alpha={est_conf:.4f} (expected: {alpha:.4f})")
 
 #%%
