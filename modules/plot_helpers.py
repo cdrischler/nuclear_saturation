@@ -287,5 +287,6 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=3, alpha_unit="nor
             print(err_ellipse, err_radius)
             print(np.abs(est_conf-alpha), radius_tol)
             raise ValueError(f"Obtained confidence region not consistent. Estimated alpha={est_conf:.4f} (expected: {alpha:.4f})")
+    return ax
 
 #%%
