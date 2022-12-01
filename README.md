@@ -30,6 +30,9 @@ jupyter-notebook&
 * [Nuclear charge and neutron radii and nuclear matter: trend analysis][Reinhard:2016]
 * Christian's [review article][Drischler2021:AnnRev]
 
+### Misc
+* [Murphy's notes](https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf) on conjugate priors
+
 ### Kernel Density Estimation (KDE)
 * https://stackabuse.com/kernel-density-estimation-in-python-using-scikit-learn/
 * https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html
