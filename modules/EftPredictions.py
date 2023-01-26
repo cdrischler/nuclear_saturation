@@ -1,10 +1,11 @@
 import pandas as pd
 import pymc3 as pm
+import arviz as az
 import matplotlib.pyplot as plt
 import matplotlib as mpb
 import corner
 import numpy as np
-from plot_helpers import cm
+from modules.plot_helpers import cm
 
 
 class EftPredictions:
@@ -19,8 +20,8 @@ class EftPredictions:
         data = pd.read_csv(filename)
         return data[((data["method"] == "MBPT") & (data["mbpt_order"] == 4)) | (data["method"] == "MBPT*")]
 
-    def fit(self, draws=10000, tune=2000, return_inferencedata=False, target_accept=.95, show_result=True):
-        print("Performing Bayesian linear regression on EFT predictions")
+    def fit(self, draws=10000, tune=2000, target_accept=.95, show_result=False):
+        print("Performing Bayesian linear regression on EFT predictions (Coester Band)")
         with pm.Model() as model:
             x_data = pm.Data("x_data", self.data["n0"])
             beta_0 = pm.Normal("beta_0", mu=1.5, sd=1)
@@ -30,18 +31,22 @@ class EftPredictions:
 
             step = pm.NUTS(target_accept=target_accept)
             trace = pm.sample(draws=draws, tune=tune, step=step,
-                              return_inferencedata=return_inferencedata,
+                              return_inferencedata=True,
                               progressbar=True)  # , nuts_kwargs=dict(target_accept=0.90))
             if show_result:
-                pm.plot_trace(trace, ["beta_0", "beta_0", "sigma"])
+                labels = ["beta_0", "beta_1", "sigma"]
+                pm.plot_trace(trace, labels)
                 plt.show()
-                # pm.display(pm.summary(trace, round_to=2))
         return model, trace
+
+    @property
+    def summary(self):
+        return az.summary(self.trace)
 
     def corner_plot(self):
         with self.model:
-            names = ["beta_0", "beta_0", "sigma"]
-            labels = [r"$\beta_0$", r"$\beta_0$", r"$\sigma$"]
+            names = ["beta_0", "beta_1", "sigma"]
+            labels = [r"$\beta_0$", r"$\beta_1$", r"$\sigma$"]
             figure = mpb.figure.Figure(figsize=(1.05*17.88*cm, 2.5*8.6*cm))
             corner.corner(self.trace, var_names=names, labels=labels,  # truths={**physical_point, "error": sigma},
                           quantiles=(0.025, 0.5, 0.975),
