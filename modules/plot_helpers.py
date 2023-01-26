@@ -80,7 +80,7 @@ def confidence_ellipse_mean_cov(mean, cov, ax, n_std=3.0, facecolor='none', labe
     """
     pearson = cov[0, 1] / np.sqrt(cov[0, 0] * cov[1, 1])
     # Using a special case to obtain the eigenvalues of this
-    # two-dimensionl dataset.
+    # two-dimensional dataset.
     ell_radius_x = np.sqrt(1 + pearson)
     ell_radius_y = np.sqrt(1 - pearson)
     ellipse = Ellipse((0, 0),
@@ -179,6 +179,14 @@ def darken_color(color, amount=0.5):
 
 
 def plot_rectangle(center, uncertainty, ax=None, **kwargs):
+    """
+    plots a rectangle centered at `center` and with width & height specified by uncertainty
+    :param center: center of the rectangle, 2d array
+    :param uncertainty: symmetric uncertainty, i.e., length of rectangle = 2 uncertainty; 2d array
+    :param ax: axis for plotting
+    :param kwargs: additional keyword arguments
+    :return: updated ax
+    """
     if ax is None:
         ax = plt.gca()
     from matplotlib.patches import Rectangle
