@@ -67,9 +67,12 @@ class DataSet(ABC):
         pass
 
     @staticmethod
-    def set_axes_labels(ax):
+    def set_axes_ranges(ax):
         ax.set_xlim(0.145, 0.175)
         ax.set_ylim(-16.5, -14.7)
+
+    @staticmethod
+    def set_axes_labels(ax):
         ax.set_xlabel('Saturation Density $n_0$ [fm$^{-3}$]')
         ax.set_ylabel('Saturation Energy $E_0/A$ [MeV]')
         ax.set_title("Empirical saturation box")
@@ -182,8 +185,10 @@ class NormDistDataSet(DataSet):
             data = data.sample(num_distr, replace=replace)
         elif num_distr != "all":
             raise ValueError(f"'num_distr' should be int or 'all', got '{num_distr}'.")
+        num_distr = len(data)
 
-        num_pts_per_distr = num_pts_per_distr if num_pts_per_distr else num_points
+        if num_pts_per_distr is None:
+            num_pts_per_distr = int(np.max([1, num_points/num_distr]))
 
         ret = pd.DataFrame()
         for irow, row in data.iterrows():
@@ -195,14 +200,14 @@ class NormDistDataSet(DataSet):
                 result_row[lbl] = row[lbl]
             ret = pd.concat((ret, result_row))
 
-        if num_points > 0:
+        if num_points is not None:
             ret = ret.sample(n=num_points, replace=len(ret) < num_points)
 
         if df is not None:
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, level=0.8647, marker_size=8, add_legend=True,
+    def plot(self, ax=None, level=0.8647, marker_size=8, add_legend=True, set_axis_labels=True,
              add_axis_labels=True, exclude=None, **kwargs):
         if ax is None:
             ax = plt.gca()
@@ -212,8 +217,10 @@ class NormDistDataSet(DataSet):
             confidence_ellipse_mean_cov(mean=mean, cov=cov,
                                         ax=ax, n_std=n_std,
                                         facecolor=colorset[irow],
-                                        label=f'{row["label"]} ({level:.0f}\%)')
+                                        label=f'{row["label"]} ({level*100:.0f}\%)')
 
+        if set_axis_labels:
+            super().set_axes_ranges(ax)
         if add_axis_labels:
             super().set_axes_labels(ax)
         if add_legend:
@@ -345,9 +352,10 @@ class KernelDensityEstimate(DataSet):
 class DataSetSampleConfig:
     data_set: DataSet
     sample_from_model: bool = False
-    sample_kwargs: dict = field(default_factory=lambda: dict(exclude=None, num_points=1, num_distr="all"))
+    sample_kwargs: dict = field(default_factory=lambda: dict(exclude=None, num_points=None, num_pts_per_distr=1, num_distr="all"))
     sample_from_model_kwargs: dict = field(default_factory=lambda: dict(num_samples=1000, kind="predictive_y",
                                                                         based_on="posterior", validate=False))
+
 
 @dataclass
 class Scenario:

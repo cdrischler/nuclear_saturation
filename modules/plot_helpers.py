@@ -6,6 +6,8 @@ import matplotlib.transforms as transforms
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.legend_handler import HandlerPatch
+from collections.abc import Iterable
+
 
 cm=1./2.54
 
@@ -200,16 +202,17 @@ def plot_rectangle(center, uncertainty, ax=None, **kwargs):
     return ax
 
 
-def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=3, alpha_unit="normal_std", num_pts=10000, 
-                                plot_scatter=True, validate=True, 
+def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="decimal", num_pts=10000,
+                                plot_scatter=True, validate=True, color=None,
                                 sym_tol=1e-12, radius_tol=1e-3, ellipse_tol=1e-12, **kwargs):
     """
     Plots the confidence region of the bivariate t-distribution efficiently (without sampling)
-    :param mu: mean vector (lenght-2)
+    :param mu: mean vector (length-2)
     :param Sigma: sym., pos. def. scale matrix (will be verified)
     :param nu: degree of freedom, nu > 0
     :param ax: matplotlib axis used for plotting
-    :param alpha: credibility level, either in decimal or in units of sigma (normal distribution) if alpha_unit="normal_std"
+    :param alpha: credibility levels [float or array of floats],
+    either in decimal or in units of sigma (normal distribution) if alpha_unit="normal_std"
     :param alpha_unit: see alpha
     :param num_pts: number of points used for sampling (if scatter plot or validation is requested)
     :param plot_scatter: sample and plot `num_pts` points from distribution (bool)
@@ -219,15 +222,25 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=3, alpha_unit="nor
     :param ellipse_tol: tolerance for checking confidence ellipse coordinate system
     :return: Nothing
     """
-    if isinstance(alpha, list):
-        for alph in np.sort(alpha)[::-1]:
+    # use default levels if levels are not specified
+    if alpha is None and alpha_unit == "decimal":
+        alpha = (0.5, 0.8, 0.95, 0.99)
+
+    if alpha is None and alpha_unit == "normal_std":
+        alpha = list(range(1, 4))
+
+    # plot array of confidence regions by calling this function recursively
+    if isinstance(alpha, Iterable):
+        for ialph, alph in enumerate(np.sort(alpha)[::-1]):
             plot_confregion_bivariate_t(mu=mu, Sigma=Sigma, nu=nu, 
                                         ax=ax, alpha=alph, alpha_unit=alpha_unit, 
                                         num_pts=num_pts, plot_scatter=plot_scatter, 
-                                        validate=validate, sym_tol=sym_tol, **kwargs)
+                                        validate=validate, sym_tol=sym_tol,
+                                        color=colors[ialph], **kwargs)
             plot_scatter = False
         return
-    
+
+    # pick current axis if none is specified
     if ax is None:
         ax = plt.gca()
         
@@ -257,7 +270,7 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=3, alpha_unit="nor
     # plot sampling points from distribution?
     samples = multivariate_t.rvs(mu, Sigma, df=nu, size=num_pts) if plot_scatter or validate else None
     if plot_scatter:
-        ax.scatter(samples[:,0], samples[:,1], s=0.2)
+        ax.scatter(samples[:, 0], samples[:, 1], s=0.2)
 
     # determine radius in deformed coordinate system
     r0 = np.sqrt(nu/(1-alpha)**(2/nu) - nu)
@@ -270,10 +283,11 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=3, alpha_unit="nor
                   width=axes_length[0], 
                   height=axes_length[1],
                   angle=np.rad2deg(angle), **kwargs)
-    if "edgecolor" not in kwargs:
-        ell.set_facecolor('None')
-        ell.set_edgecolor('r')
-    ax.add_artist(ell)  
+
+    ell.set_facecolor('None')
+    ell.set_edgecolor(color if color else 'r')
+    ell.set_label(f"{alpha*100:.0f} \% C.I.")
+    ax.add_patch(ell)
                 
     # check that the confidence region is legit? (very simplistic check)
     if validate:
