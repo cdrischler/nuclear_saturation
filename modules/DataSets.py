@@ -293,8 +293,11 @@ class KernelDensityEstimate(DataSet):
             class_lbl = np.random.choice(class_lbl, num_distr, replace=replace)
         elif num_distr != "all":
             raise ValueError(f"'num_distr' should be int or 'all', got '{num_distr}'.")
+        num_distr = len(class_lbl)
 
-        num_pts_per_distr = num_pts_per_distr if num_pts_per_distr else num_points
+        if num_pts_per_distr is None:
+            num_pts_per_distr = int(np.max([1, num_points/num_distr]))
+
         ret = pd.DataFrame()
         dframe_filtered = self.get_data_frame(exclude=exclude)
         for cls in class_lbl:
@@ -304,7 +307,7 @@ class KernelDensityEstimate(DataSet):
                 samples[lbl] = cls
             ret = pd.concat((ret, samples))
 
-        if num_points > 0:
+        if num_points is not None:
             ret = ret.sample(n=num_points, replace=len(ret) < num_points)
 
         if df is not None:
