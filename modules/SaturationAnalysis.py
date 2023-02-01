@@ -94,6 +94,7 @@ class SaturationAnalysis:
                 # ax.set_xlim(0.145, 0.175)  # (0.135, 0.185)
                 # ax.set_ylim(-16.5, -14.75)  # (-17.0, -14.7)
             pdf.savefig(fig)
+            fig.clear()
 
         # plot multi-universe average of the posterior predictive (corner plot)
         names = ["predictive rho0", "predictive E/A"]
@@ -107,7 +108,7 @@ class SaturationAnalysis:
                       quantiles=(0.025, 0.5, 0.975),  # TODO: 2 sigma hard-coded
                       title_quantiles=(0.025, 0.5, 0.975),
                       levels=(1 - np.exp(-n_std**2 / 2),),
-                      bins=200,
+                      bins=50,
                       plot_datapoints=False, plot_density=False,
                       show_titles=True, title_fmt=".3f", title_kwargs={"fontsize": 8}, fig=fig)
         self.drischler_satbox.plot(ax=axs[1, 0], plot_scatter=False, plot_box_estimate=True,
