@@ -203,8 +203,8 @@ def plot_rectangle(center, uncertainty, ax=None, **kwargs):
     return ax
 
 
-def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="decimal", num_pts=10000,
-                                plot_scatter=True, validate=True, color=None,
+def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="decimal", num_pts=10000000,
+                                plot_scatter=True, validate=True,
                                 sym_tol=1e-12, radius_tol=1e-3, ellipse_tol=1e-10, **kwargs):
     """
     Plots the confidence region of the bivariate t-distribution efficiently (without sampling)
@@ -225,21 +225,12 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
     """
     # use default levels if levels are not specified
     if alpha is None and alpha_unit == "decimal":
-        alpha = (0.5, 0.8, 0.95, 0.99)
+        alpha = np.array((0.5, 0.8, 0.95, 0.99))
 
     if alpha is None and alpha_unit == "normal_std":
-        alpha = list(range(1, 4))
+        alpha = np.array((range(1, 4)))
 
-    # plot array of confidence regions by calling this function recursively
-    if isinstance(alpha, Iterable):
-        for ialph, alph in enumerate(np.sort(alpha)[::-1]):
-            plot_confregion_bivariate_t(mu=mu, Sigma=Sigma, nu=nu, 
-                                        ax=ax, alpha=alph, alpha_unit=alpha_unit, 
-                                        num_pts=num_pts, plot_scatter=plot_scatter, 
-                                        validate=validate, sym_tol=sym_tol,
-                                        color=colors[ialph], **kwargs)
-            plot_scatter = False
-        return
+    alpha = np.sort(np.atleast_1d(alpha), False)[::-1]
 
     # pick current axis if none is specified
     if ax is None:
@@ -250,9 +241,9 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
     Sigma = np.asarray(Sigma)
     if alpha_unit == "normal_std":
         alpha = 1-np.exp(-alpha**2/2)
-    if alpha <= 0 or alpha > 1:
-        raise ValueError(f"alpha has to be a confidence level, got {alpha}")
-        
+    if np.any(alpha <= 0) or np.any(alpha > 1):
+        raise ValueError(f"alpha has to be a (list of) confidence level(s), got {alpha}")
+
     if mu.shape != (2,) or Sigma.shape != (2,2):
         raise ValueError("requires a bivariate distribution function")
     if nu <=0:
@@ -275,45 +266,54 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
 
     # determine radius in deformed coordinate system
     r0 = np.sqrt(nu/(1-alpha)**(2/nu) - nu)
-    # print(f"ro {r0} at level {alpha*100}")
+    # print(f"r0 {r0} at level {alpha*100}")
 
     # create an ellipse
-    axes_length = 2*r0*np.sqrt(lambda_)  # note that x^T Sigma^-1 x
     angle = np.arctan2(Q[1, 0], Q[0, 0])  # compute the angle of the axis associated with the first eigenvalue and the x axis
-    
-    ell = Ellipse(xy=(mu[0], mu[1]),
-                  width=axes_length[0], 
-                  height=axes_length[1],
-                  angle=np.rad2deg(angle), **kwargs)
+    axes_lengths = 2*np.sqrt(lambda_) * r0[:, np.newaxis]
 
-    ell.set_facecolor('None')
-    ell.set_edgecolor(color if color else 'r')
-    ell.set_label(f"{alpha*100:.0f}\% C.L.")
-    ax.add_patch(ell)
+    for iellipse, axes_length in enumerate(axes_lengths):
+        ell = Ellipse(xy=(mu[0], mu[1]),
+                      width=axes_length[0],
+                      height=axes_length[1],
+                      angle=np.rad2deg(angle), **kwargs)
+
+        ell.set_facecolor('None')
+        ell.set_edgecolor(colors[iellipse])
+        ell.set_label(f"{alpha[iellipse]*100:.0f}\%")
+        ax.add_patch(ell)
                 
     # check that the confidence region is legit? (very simplistic check)
     if validate:
-        # get points on circle in the deformed coordinate system
-        circle = r0*np.array([[np.cos(phi), np.sin(phi)] for phi in np.linspace(0, 2*np.pi,num_pts)]).T
-
-        # gets points on final confidence ellipse and plot them
-        conf_ellipse = ((Q @ np.sqrt(np.diag(lambda_))) @ circle).T + mu
-        ax.plot(conf_ellipse[:,0], conf_ellipse[:,1], c="w", ls=":") # c="g") #**kwargs)
-        
-        # check radius r0 and corresponding confidence interval
         invSigma = np.linalg.inv(Sigma)
-        est_conf = np.sum([np.einsum("i,ij,j->", (point-mu), invSigma, (point-mu)) <= r0**2 for point in samples])/len(samples)
-        dev = np.linalg.norm(np.array([np.einsum("i,ij,j->", (point-mu), invSigma, (point-mu)) for point in conf_ellipse])-r0**2, 
-                             ord=np.inf)
-        # TODO: use np.einsum() to compute quadratic form for all vectors at once (see `fit_bivariate_t()`): much faster!
-        err_radius = (np.abs(est_conf-alpha) > radius_tol)
-        err_ellipse = (dev > ellipse_tol)
-        if err_radius or err_ellipse:
-            print(err_ellipse, err_radius)
-            print(dev, ellipse_tol, np.abs(est_conf-alpha), radius_tol)
-            raise ValueError(f"Obtained confidence region not consistent. Estimated alpha={est_conf:.4f} (expected: {alpha:.4f})")
-        else:
-            print(f"confidence ellipse at level '{alpha}' validated.")
+        unit_circle = np.array([[np.cos(phi), np.sin(phi)] for phi in np.linspace(0, 2*np.pi, num_pts)]).T
+        for ir0i, r0i in enumerate(r0):
+            # get points on circle in the deformed coordinate system
+            circle = r0i*unit_circle
+
+            # gets points on final confidence ellipse and plot them
+            conf_ellipse = ((Q @ np.sqrt(np.diag(lambda_))) @ circle).T + mu
+            ax.plot(conf_ellipse[:, 0], conf_ellipse[:, 1], c="w", ls=":")  # c="g") #**kwargs)
+
+            # check radius r0 and corresponding confidence interval
+            # est_conf2 = np.sum([np.einsum("i,ij,j->", (point-mu), invSigma, (point-mu)) <= r0i**2 for point in samples])/len(samples)
+            # dev2 = np.linalg.norm(np.array([np.einsum("i,ij,j->", (point-mu), invSigma, (point-mu)) for point in conf_ellipse])-r0i**2,
+            #                      ord=np.inf)
+            X = samples-mu
+            est_conf = np.sum(np.einsum('ij,jk,ik->i', X, invSigma, X) <= r0i**2)/len(samples)
+            X = conf_ellipse-mu
+            dev = np.linalg.norm((np.einsum('ij,jk,ik->i', X, invSigma, X) - r0i**2), ord=np.inf)
+            # print("ec", np.allclose(est_conf2-est_conf, 0))
+            # print("dev", np.allclose(dev2-dev, 0))
+
+            err_radius = (np.abs(est_conf-alpha[ir0i]) > radius_tol)
+            err_ellipse = (dev > ellipse_tol)
+            if err_radius or err_ellipse:
+                print(err_ellipse, err_radius)
+                print(dev, ellipse_tol, np.abs(est_conf-alpha), radius_tol)
+                raise ValueError(f"Obtained confidence region not consistent. Estimated alpha={est_conf:.4f} (expected: {alpha:.4f})")
+            else:
+                print(f"confidence ellipse at level '{alpha[ir0i]}' validated.")
     return ax
 
 
