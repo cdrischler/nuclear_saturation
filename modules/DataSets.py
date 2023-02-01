@@ -101,7 +101,7 @@ class GenericDataSet(DataSet):
         return ret
 
     def plot(self, ax=None, plot_scatter=True, plot_box_estimate=False, marker_size=8,
-             add_legend=True, add_axis_labels=True, exclude=None, **kwargs):
+             place_legend=True, add_axis_labels=True, exclude=None, **kwargs):
         if ax is None:
             ax = plt.gca()
 
@@ -121,7 +121,7 @@ class GenericDataSet(DataSet):
                            s=marker_size, label=clbls)
         if add_axis_labels:
             super().set_axes_labels(ax)
-        if add_legend:
+        if place_legend:
             super().legend(ax)
 
     def box_estimate(self, print_result=False, exclude=None):
