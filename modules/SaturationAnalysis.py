@@ -42,7 +42,7 @@ class SaturationAnalysis:
         pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.pdf_output_path}/constraints.pdf")
         fig, ax = plt.subplots(1, 1, figsize=(1.25*6.8*cm, 1.2*6.8*cm))
         self.drischler_satbox.plot(ax=ax, plot_scatter=False, plot_box_estimate=True, marker_size=8,
-                                   add_legend=False, add_axis_labels=False, exclude=None)
+                                   place_legend=False, add_axis_labels=False, exclude=None)
 
         dft_constraints = DEFAULT_DFT_CONSTRAINTS if dft_constraints is None else dft_constraints
         for key, val in dft_constraints.items():
@@ -74,7 +74,7 @@ class SaturationAnalysis:
             fig, axs = plt.subplots(1, 2, figsize=(2*6.8*cm, 6.8*cm), constrained_layout=True)
             for ax in axs:
                 self.drischler_satbox.plot(ax=ax, plot_scatter=False,
-                                           plot_box_estimate=True, add_legend=False, add_axis_labels=False)
+                                           plot_box_estimate=True, place_legend=False, add_axis_labels=False)
                 model.data.plot(ax=ax, x="rho0", y="E/A", linestyle="None",
                                 marker="o", c="k", ms=1, zorder=20, alpha=0.2)
             # print(model.sanity_check(num_samples=100000, based_on="prior", do_print=True))
@@ -112,7 +112,7 @@ class SaturationAnalysis:
                       plot_datapoints=False, plot_density=False,
                       show_titles=True, title_fmt=".3f", title_kwargs={"fontsize": 8}, fig=fig)
         self.drischler_satbox.plot(ax=axs[1, 0], plot_scatter=False, plot_box_estimate=True,
-                                   add_legend=False, add_axis_labels=False)
+                                   place_legend=False, add_axis_labels=False)
         self.eft_predictions.plot(ax=axs[1, 0])
         # self.plot_contraints()
 
@@ -136,11 +136,16 @@ def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
 
         if plot_satbox:
             drischler_satbox.plot(ax=ax, plot_scatter=False, plot_box_estimate=True, marker_size=8,
-                                  add_legend=False, add_axis_labels=False, exclude=None)
+                                  place_legend=False, add_axis_labels=False, exclude=None)
 
         triv_model = StatisticalModel(data=None, prior_params=prior_params)
-        triv_model.plot(ax=ax, kind="predictive_y", based_on="prior", plot_data=True, levels=levels,
-                        set_xy_limits=False, set_xy_lbls=False, place_legend=False, validate=False)
+        df, mu, shape_matrix = triv_model.predictives_params("prior")
+        from modules.plot_helpers import plot_confregion_bivariate_t
+        plot_confregion_bivariate_t(ax=ax, mu=mu,
+                                    Sigma=shape_matrix, nu=df,
+                                    alpha=levels, alpha_unit="decimal", num_pts=10000000,
+                                    plot_scatter=False, validate=False, edgecolor='k', facecolor="None")
+
         ax.set_title(f"Prior {prior_params['label']}")
 
         ax.set_xlim(0.14, 0.18)
@@ -154,7 +159,7 @@ def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
             ax.set_yticklabels([])
 
         if iprior_params == 2:
-            ax.legend(ncol=2, prop={'size': 7}, frameon=False)
+           ax.legend(ncol=2, prop={'size': 7}, frameon=False)
     fig.savefig("prior_sets.pdf")
 
 #%%
