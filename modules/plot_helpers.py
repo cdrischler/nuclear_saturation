@@ -296,15 +296,10 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
             ax.plot(conf_ellipse[:, 0], conf_ellipse[:, 1], c="w", ls=":")  # c="g") #**kwargs)
 
             # check radius r0 and corresponding confidence interval
-            # est_conf2 = np.sum([np.einsum("i,ij,j->", (point-mu), invSigma, (point-mu)) <= r0i**2 for point in samples])/len(samples)
-            # dev2 = np.linalg.norm(np.array([np.einsum("i,ij,j->", (point-mu), invSigma, (point-mu)) for point in conf_ellipse])-r0i**2,
-            #                      ord=np.inf)
             X = samples-mu
             est_conf = np.sum(np.einsum('ij,jk,ik->i', X, invSigma, X) <= r0i**2)/len(samples)
             X = conf_ellipse-mu
             dev = np.linalg.norm((np.einsum('ij,jk,ik->i', X, invSigma, X) - r0i**2), ord=np.inf)
-            # print("ec", np.allclose(est_conf2-est_conf, 0))
-            # print("dev", np.allclose(dev2-dev, 0))
 
             err_radius = (np.abs(est_conf-alpha[ir0i]) > radius_tol)
             err_ellipse = (dev > ellipse_tol)
