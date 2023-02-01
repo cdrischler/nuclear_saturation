@@ -53,7 +53,7 @@ class StatisticalModel:
         :param mat: matrix
         :param raise_error: raise error if not symmetric and positive semi-definite
         :param rtol: relative tolerance used for comparison
-        :param atol: absolute tolerance used for comparision
+        :param atol: absolute tolerance used for comparison
         :return: returns boolean result of the validation
         """
         stat_sym = np.allclose(mat, mat.T, rtol=rtol, atol=atol)
@@ -255,7 +255,7 @@ class StatisticalModel:
                             color=colors[ibon])
                 # TODO: `sns.kdeplot()` seems to have issues with displaying the handles in legends
 
-        if plot_data and self.data:
+        if plot_data and self.data is not None:
             ax.scatter(self.data["rho0"], self.data["E/A"], s=4, c=colors[5])
 
         if set_xy_limits:
