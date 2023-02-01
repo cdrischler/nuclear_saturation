@@ -316,4 +316,60 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
             print(f"confidence ellipse at level '{alpha}' validated.")
     return ax
 
+
+def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status=False):
+    if nu_limits is None:
+        nu_limits = (3, 8)
+
+    # estimate mean value (simple!)
+    mu_est = data.mean(axis=0)
+
+    # estimate scale matrix (from covariance matrix)
+    cov_est = np.cov(data[:, 0], data[:, 1])
+    inv_cov_est = np.linalg.inv(cov_est)
+
+    def metric(nu, alpha):
+        if print_status:
+            print(f"current nu: {nu}")
+        rhs = ((nu - 2)/nu) * (nu/(1-alpha)**(2/nu) - nu)  # note that this includes the radius squared!
+        X = data - mu_est
+        alpha_est = np.sum(np.einsum('ij,jk,ik->i', X, inv_cov_est, X) <= rhs)/len(data)
+        return alpha_est - alpha
+    try:
+        nu_est = optimize.bisect(metric, nu_limits[0], nu_limits[1], args=(alpha_fit,), xtol=tol)
+        Psi_est = cov_est * (nu_est-2) / nu_est
+    except ValueError as e:
+        print(f"Error while fitting bivariate t distribution with finite dof: '{str(e)}'; assuming Normal distribution")
+        nu_est = np.inf
+        Psi_est = cov_est
+    return mu_est, Psi_est, np.rint(nu_est)
+
+
+def test_fit_bivariate_t(df=7, M=None, mu=None, size=10000000, tol=1e-3, print_status=True):
+    nu_limits = (3, 8)
+    if np.isfinite(df) and df > nu_limits[1]:
+        print(f"requested (finite) df={df} too high")
+        return
+
+    if M is None:
+        M = np.array([[1, 0], [0, 2]])
+    if mu is None:
+        mu = np.array([1, 2])
+    if np.isfinite(df):
+        is_normal_distr = False
+        from scipy.stats import multivariate_t
+        data = multivariate_t.rvs(df=df, loc=mu, shape=M, size=size)
+    else:
+        is_normal_distr = True
+        from scipy.stats import multivariate_normal
+        data = multivariate_normal.rvs(mean=mu, cov=M, size=size)
+
+    mu_est, psi_est, nu_est = fit_bivariate_t(data, nu_limits=nu_limits, print_status=print_status)
+
+    stat_mu = np.abs(mu-mu_est) < tol
+    stat_psi = np.abs(M-psi_est) < tol
+    stat_nu = np.abs(df-nu_est) < tol if not is_normal_distr else True
+    return np.any(stat_mu) and np.any(stat_psi) and stat_nu
+# test_fit_bivariate_t()
+
 #%%
