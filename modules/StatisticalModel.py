@@ -41,10 +41,12 @@ class StatisticalModel:
     @property
     def sum_squared_dev(self):
         """
-        returns the sum of the squared deviations matrix, i.e., the symmetric S matrix (d x d)
+        returns the sum of the squared deviations matrix, i.e., the symmetric S matrix (d x d);
+        in other words, returns the un-normalized covariance matrix
         """
         diff = self.data[self.quantities] - self.sample_mean
         return np.sum([np.outer(row.to_numpy(), row.to_numpy()) for irow, row in diff.iterrows()], axis=0)
+        # or just # return (len(self.data) - 1) * np.cov(self.data[self.quantities[0]], self.data[self.quantities[1]])
 
     @staticmethod
     def _validate_matrix(mat, raise_error=False, rtol=1e-05, atol=1e-08):
