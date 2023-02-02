@@ -262,8 +262,8 @@ class StatisticalModel:
 
         return fig, axs
 
-    def plot_predictives_corner(self, plot_data=True, levels=None,
-                                set_xy_limits=True, set_xy_lbls=True, place_legend=True, validate=False):
+    def plot_predictives_corner(self, plot_data=True, levels=None, show_box_in_marginals=False,
+                                place_legend=True, validate=False):
         """
 
         :param axs: axes used for plotting, array-like
@@ -299,6 +299,7 @@ class StatisticalModel:
             # diagonal panels
             R = np.linalg.cholesky(shape_matrix)
             from scipy.stats import t
+            from plot_helpers import plot_confregion_univariate_t
             for idiag, diag in enumerate(np.diag(axs)):
                 sigma = np.linalg.norm(R[idiag, :])
                 if idiag == 0:
@@ -308,19 +309,25 @@ class StatisticalModel:
                     y = np.linspace(-18, -12, 1000)
                     x = t.pdf(y, df, loc=mu[idiag], scale=sigma) * sigma
 
-                diag.plot(x, y, c="darkgray", ls='-', lw=2,
+                diag.plot(x, y, c="k", ls='-', lw=2,
                           alpha=1, label='t pdf')
 
-            # t.cdf(x, df, loc=0, scale=1)  # TODO: plot C.I. for marginal distributions
+                orientation = "vertical" if idiag == 0 else "horizontal"
+                conf_intervals = plot_confregion_univariate_t(mu[idiag], sigma, df, ax=diag, alpha=None, num_pts=100000000,
+                plot_hist=False, validate=validate, orientation=orientation, atol=1e-3)
+
+                cc = conf_intervals[1]
+                diag.set_title(f"${cc['mu']:.3f} \pm {cc['Delta(+/-)']:.3f}$ at {cc['alpha']*100:.0f}\%")
 
             # empirical saturation range
-            axs[0, 0].axvspan(box_params["rho0"][0]-box_params["rho0"][1],
-                         box_params["rho0"][0]+box_params["rho0"][1],
-                         zorder=-1, alpha=0.5, color='lightgray')
+            if show_box_in_marginals:
+                axs[0, 0].axvspan(box_params["rho0"][0]-box_params["rho0"][1],
+                             box_params["rho0"][0]+box_params["rho0"][1],
+                             zorder=-1, alpha=0.5, color='lightgray')
 
-            axs[1, 1].axhspan(box_params["E/A"][0]-box_params["E/A"][1],
-                              box_params["E/A"][0]+box_params["E/A"][1],
-                              zorder=-1, alpha=0.5, color='lightgray')
+                axs[1, 1].axhspan(box_params["E/A"][0]-box_params["E/A"][1],
+                                  box_params["E/A"][0]+box_params["E/A"][1],
+                                  zorder=-1, alpha=0.5, color='lightgray')
 
             axs[0,0].set_xlim(0.13, 0.18)
             axs[1,0].set_xlim(0.13, 0.18)

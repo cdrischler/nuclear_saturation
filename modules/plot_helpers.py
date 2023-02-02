@@ -312,6 +312,60 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
     return ax
 
 
+def plot_confregion_univariate_t(mu, Sigma, nu, ax=None, alpha=None, num_pts=100000000,
+                                plot_hist=False, validate=True, orientation="horizontal",
+                                atol=1e-3, **kwargs):
+    # pick current axis if none is specified
+    if ax is None:
+        ax = plt.gca()
+
+    if alpha is None:
+        alpha = np.array((0.5, 0.8, 0.95, 0.99))
+    alpha = np.sort(np.atleast_1d(alpha))[::-1]
+
+    from scipy.stats import t
+
+    def conf_region(x0, df, loc, scale, alpha):
+        cdf_diff = t.cdf(loc+x0, df=df, loc=loc, scale=scale) - t.cdf(loc-x0, df=df, loc=loc, scale=scale)
+        return cdf_diff - alpha
+
+    samples = t.rvs(size=num_pts, df=nu, loc=mu, scale=Sigma) if plot_hist or validate else None
+    if plot_hist:
+        n, bins, patches = plt.hist(samples, 100, density=True, color='green', alpha=0.7, orientation=orientation)
+
+    conf_intervals = []
+    for ialph, alph in enumerate(alpha):
+        # print(alph, Sigma, mu, nu)
+        sol = optimize.newton(func=conf_region, x0=Sigma, args=(nu, mu, Sigma, alph))
+        # print(sol)
+        current_interval = {"alpha": alph, "mu": mu, "Delta(+/-)": sol, "left": mu-sol, "right": mu+sol}
+        conf_intervals.append(current_interval)
+        if validate:
+            alpha_est = np.sum(np.abs(samples - mu) <= sol)/num_pts
+            diff = np.abs(alph-alpha_est)
+            if diff > atol:
+                raise ValueError(f"requested tolerance not achieved; diff {diff}")
+            else:
+                print(f"confidence ellipse at level '{alph}' validated.")
+
+        kwargs = dict(zorder=-1, alpha=1, color=colors[ialph])
+        if orientation == "vertical":
+            ax.axvspan(current_interval["left"], current_interval["right"], **kwargs)
+        else:
+            ax.axhspan(current_interval["left"], current_interval["right"], **kwargs)
+
+    return np.array(conf_intervals)
+
+
+def test_plot_confregion_univariate_t():
+    mu = 4
+    Sigma = 2
+    nu = 90000  # hence, approx. a normal distribution
+    alpha = (0.6826894921370859, 0.9544997361036416, 0.9973002039367398)
+    conf_intervals = plot_confregion_univariate_t(mu=mu, Sigma=Sigma, nu=nu, alpha=alpha)
+    return conf_intervals
+
+
 def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status=False):
     if nu_limits is None:
         nu_limits = (3, 8)
