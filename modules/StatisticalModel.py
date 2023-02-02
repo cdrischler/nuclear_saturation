@@ -269,33 +269,52 @@ class StatisticalModel:
         :param axs: axes used for plotting, array-like
         :return: None
         """
-        from plot_helpers import cm
-        fig, axs = plt.subplots(2, 2, figsize=(17.8*cm, 8.6*cm), sharex=True, sharey=True,
-                                tight_layout=True)
-        fig.delaxes(axs[0, 1])
-        fig.tight_layout(pad=1.5)
+        ret_array = []
+        for ibon, bon in enumerate(("prior", "posterior")):
+            from plot_helpers import cm
+            fig, axs = plt.subplots(2, 2, figsize=(9*cm, 1.2*8.6*cm), sharex=True, sharey=True,
+                                    )#tight_layout=True)
+            axs[0, 1].grid(False)
+            axs[0, 1].axis('off')
+            axs[0, 1].text(0.05, 0.9, f"{bon} predictive", transform=axs[0, 1].transAxes)  #transAxes)
+            axs[0, 1].text(0.05, 0.83, f"{self.prior_params['label'].lower()}", transform=axs[0, 1].transAxes)  # transAxes)
 
-        for ibon, bon in enumerate(("prior", )): #"posterior")):
+            fig.tight_layout(pad=.5)
+
             df, mu, shape_matrix = self.predictives_params(bon)
             plot_confregion_bivariate_t(ax=axs[1, 0], mu=mu,
                                         Sigma=shape_matrix, nu=df,
                                         alpha=levels, alpha_unit="decimal", num_pts=10000000,
                                         plot_scatter=False, validate=validate, edgecolor='k', facecolor="None")
 
-        if set_xy_limits:
-            self.set_xy_lim(axs[0,0])
+            if plot_data and self.data is not None:
+                axs[1, 0].scatter(self.data["rho0"], self.data["E/A"], s=4, c=colors[5])
 
-        if set_xy_lbls:
-            pass
-            # for ax in axs:
-            #     ax.set_xlabel(self.xlabel)
-            # axs[0].set_ylabel(self.ylabel)
+            from modules.SaturationAnalysis import drischler_satbox
+            drischler_satbox.plot(ax=axs[1, 0], plot_scatter=False, plot_box_estimate=True,
+                                  add_axis_labels=False, place_legend=False)
+            box_params = drischler_satbox.box_estimate()
+            for diag in np.diag(axs):
+                diag.axvspan(box_params["rho0"][0]-box_params["rho0"][1],
+                           box_params["rho0"][0]+box_params["rho0"][1],
+                           zorder=-1, alpha=0.5, color='lightgray')
 
-        if place_legend:
-            pass
-            # axs[1].legend(ncol=2, title="confidence level", prop={'size': 8}, frameon=False)
+            if set_xy_limits:
+                self.set_xy_lim(axs[0, 0])
 
-        return fig, axs
+            if set_xy_lbls:
+                for ax in axs[-1, :]:
+                    ax.set_xlabel(self.xlabel)
+                for ax in axs[:, 0]:
+                    ax.set_ylabel(self.ylabel)
+
+            if place_legend:
+                axs[1, 0].legend(ncol=2, title="confidence level",
+                                 prop={'size': 8}, frameon=False,
+                                 bbox_to_anchor=(1.6, 1.5), loc='center')
+
+            ret_array.append([fig, axs])
+        return ret_array
 
     @staticmethod
     def set_xy_lim(ax):
