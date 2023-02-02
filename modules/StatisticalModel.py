@@ -265,9 +265,15 @@ class StatisticalModel:
     def plot_predictives_corner(self, plot_data=True, levels=None, show_box_in_marginals=False,
                                 place_legend=True, validate=False):
         """
+        Makes a corner plot of the prior predictive and posterior predictive.
+        No sampling of the distribution functions is performed.
 
-        :param axs: axes used for plotting, array-like
-        :return: None
+        :param plot_data: plot data used for inference? Boolean
+        :param levels: confidence levels in decimal, array-like or float
+        :param show_box_in_marginals: show empirical saturation box in panels with marginal distributions? boolean
+        :param place_legend: show a legend in the figure? boolean
+        :param validate: validate confidence regions? boolean
+        :return: array with figures and axes. Prior predictive and posterior predictive are plotted in different figures
         """
         ret_array = []
         for ibon, bon in enumerate(("prior", "posterior")):
@@ -305,19 +311,28 @@ class StatisticalModel:
                 if idiag == 0:
                     x = np.linspace(0.12, 0.20, 1000)
                     y = t.pdf(x, df, loc=mu[idiag], scale=sigma) * sigma
+                    quantity = "n_0"
+                    unit = "fm$^{-3}$"
+                    title_fmt = ".3f"
                 else:
                     y = np.linspace(-18, -12, 1000)
                     x = t.pdf(y, df, loc=mu[idiag], scale=sigma) * sigma
+                    quantity = r"\frac{E_0}{A}"
+                    unit = "MeV"
+                    title_fmt = ".2f"
 
-                diag.plot(x, y, c="k", ls='-', lw=2,
-                          alpha=1, label='t pdf')
+                diag.plot(x, y, c="k", ls='-', lw=2, alpha=1, label='t pdf')
 
                 orientation = "vertical" if idiag == 0 else "horizontal"
                 conf_intervals = plot_confregion_univariate_t(mu[idiag], sigma, df, ax=diag, alpha=None, num_pts=100000000,
                 plot_hist=False, validate=validate, orientation=orientation, atol=1e-3)
 
+                fmt = "{{0:{0}}}".format(title_fmt).format
+                title = r"${{{1}}} \pm {{{2}}}$ {{{3}}} ({{{4:.0f}}}\%)"
+
                 cc = conf_intervals[1]
-                diag.set_title(f"${cc['mu']:.3f} \pm {cc['Delta(+/-)']:.3f}$ at {cc['alpha']*100:.0f}\%")
+                title = title.format(quantity, fmt(cc['mu']), fmt(cc['Delta(+/-)']), unit, cc["alpha"]*100)
+                diag.set_title(title)
 
             # empirical saturation range
             if show_box_in_marginals:
@@ -350,6 +365,56 @@ class StatisticalModel:
 
             ret_array.append([fig, axs])
         return ret_array
+
+    def plot_predictives_corner_bf(self, level=0.95, num_pts=100000000, debug=False):
+        """
+        Makes a corner plots brute-force by sampling the predictive prior and predictive posterior;
+        each of them gets its own figure
+
+        :param level: confidence level of the contour
+        :param num_pts: number of points used for sampling
+        :param debug: gives helpful information for debugging (since `corner` has a known bug, see below). Boolean
+        :return: array of figures and axes
+        """
+        ret_array = []
+        for ibon, bon in enumerate(("prior", "posterior")):
+            from plot_helpers import cm
+            fig, axs = plt.subplots(2, 2, figsize=(9*cm, 1.2*8.6*cm), sharex=False, sharey=False)
+
+            import corner
+            df, mu, shape_matrix = self.predictives_params(bon)
+            # df = 1000000
+            # mu = [0.16, -16]
+            # shape_matrix = np.diag([0.01, 0.2])**2
+            data = multivariate_t.rvs(mu, shape_matrix, df=df, size=num_pts)
+
+            quantitles = (1-level)/2
+            quantiles = [quantitles, 0.5, 1-quantitles]
+
+            corner.corner(data=data,  # var_names=names,
+                          labels=("$n_0$", "$E_0/A$"),
+                          quantiles=quantiles,
+                          show_titles=False,   # BUG in `corner.py`, see below
+                          title_quantiles=None,
+                          levels=(level,),
+                          bins=60, verbose=debug,
+                          plot_datapoints=False, plot_density=False,
+                          title_fmt=".6f", title_kwargs={"fontsize": 8}, fig=fig)
+
+            # There's a bug in `corner` version 2.2.1. The title will always show
+            # the default `quantiles=[0.16, 0.5, 0.84]`. This was already reported in
+            # https://github.com/dfm/corner.py/issues/107 .
+
+            for ind in range(2):
+                mu = np.mean(data[:, ind])
+                disp = mu - np.percentile(data[:, ind], (1-level)/2*100)
+                if debug:
+                    print("expected means and both-sided errors", mu, disp, mu-disp, mu+disp)
+                axs[ind, ind].set_title(f"${mu:.3f} \pm {disp:.3f}$")
+
+            ret_array.append([fig, axs])
+        return ret_array
+
 
     @staticmethod
     def set_xy_lim(ax):
