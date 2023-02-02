@@ -160,6 +160,6 @@ def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
 
         if iprior_params == 2:
            ax.legend(ncol=2, prop={'size': 7}, frameon=False)
-    fig.savefig("prior_sets.pdf")
+    return fig, axs
 
 #%%
