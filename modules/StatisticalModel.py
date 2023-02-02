@@ -272,15 +272,16 @@ class StatisticalModel:
         ret_array = []
         for ibon, bon in enumerate(("prior", "posterior")):
             from plot_helpers import cm
-            fig, axs = plt.subplots(2, 2, figsize=(9*cm, 1.2*8.6*cm), sharex=True, sharey=True,
-                                    )#tight_layout=True)
+            fig, axs = plt.subplots(2, 2, figsize=(9*cm, 1.2*8.6*cm), sharex=False, sharey=False)
+
+            # upper right panel
             axs[0, 1].grid(False)
             axs[0, 1].axis('off')
             axs[0, 1].text(0.05, 0.9, f"{bon} predictive", transform=axs[0, 1].transAxes)  #transAxes)
-            axs[0, 1].text(0.05, 0.83, f"{self.prior_params['label'].lower()}", transform=axs[0, 1].transAxes)  # transAxes)
-
+            axs[0, 1].text(0.05, 0.83, f"({self.prior_params['label'].lower()})", transform=axs[0, 1].transAxes)  # transAxes)
             fig.tight_layout(pad=.5)
 
+            # lower left panel
             df, mu, shape_matrix = self.predictives_params(bon)
             plot_confregion_bivariate_t(ax=axs[1, 0], mu=mu,
                                         Sigma=shape_matrix, nu=df,
@@ -294,24 +295,51 @@ class StatisticalModel:
             drischler_satbox.plot(ax=axs[1, 0], plot_scatter=False, plot_box_estimate=True,
                                   add_axis_labels=False, place_legend=False)
             box_params = drischler_satbox.box_estimate()
-            for diag in np.diag(axs):
-                diag.axvspan(box_params["rho0"][0]-box_params["rho0"][1],
-                           box_params["rho0"][0]+box_params["rho0"][1],
-                           zorder=-1, alpha=0.5, color='lightgray')
 
-            if set_xy_limits:
-                self.set_xy_lim(axs[0, 0])
+            # diagonal panels
+            R = np.linalg.cholesky(shape_matrix)
+            from scipy.stats import t
+            for idiag, diag in enumerate(np.diag(axs)):
+                sigma = np.linalg.norm(R[idiag, :])
+                if idiag == 0:
+                    x = np.linspace(0.12, 0.20, 1000)
+                    y = t.pdf(x, df, loc=mu[idiag], scale=sigma) * sigma
+                else:
+                    y = np.linspace(-18, -12, 1000)
+                    x = t.pdf(y, df, loc=mu[idiag], scale=sigma) * sigma
 
-            if set_xy_lbls:
-                for ax in axs[-1, :]:
-                    ax.set_xlabel(self.xlabel)
-                for ax in axs[:, 0]:
-                    ax.set_ylabel(self.ylabel)
+                diag.plot(x, y, c="darkgray", ls='-', lw=2,
+                          alpha=1, label='t pdf')
+
+            # t.cdf(x, df, loc=0, scale=1)  # TODO: plot C.I. for marginal distributions
+
+            # empirical saturation range
+            axs[0, 0].axvspan(box_params["rho0"][0]-box_params["rho0"][1],
+                         box_params["rho0"][0]+box_params["rho0"][1],
+                         zorder=-1, alpha=0.5, color='lightgray')
+
+            axs[1, 1].axhspan(box_params["E/A"][0]-box_params["E/A"][1],
+                              box_params["E/A"][0]+box_params["E/A"][1],
+                              zorder=-1, alpha=0.5, color='lightgray')
+
+            axs[0,0].set_xlim(0.13, 0.18)
+            axs[1,0].set_xlim(0.13, 0.18)
+
+            axs[1,0].set_ylim(-16.5, -15.00)
+            axs[1,1].set_ylim(-16.5, -15.00)
+
+            axs[0,0].axes.xaxis.set_ticklabels([])
+            # axs[0,0].axes.yaxis.set_ticklabels([])
+            # axs[1,1].axes.xaxis.set_ticklabels([])
+            axs[1,1].axes.yaxis.set_ticklabels([])
+
+            axs[1, 0].set_xlabel(self.xlabel)
+            axs[1, 0].set_ylabel(self.ylabel)
 
             if place_legend:
                 axs[1, 0].legend(ncol=2, title="confidence level",
                                  prop={'size': 8}, frameon=False,
-                                 bbox_to_anchor=(1.6, 1.5), loc='center')
+                                 bbox_to_anchor=(1.8, 1.5), loc='center')
 
             ret_array.append([fig, axs])
         return ret_array
