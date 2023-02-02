@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from scipy.stats import invwishart, multivariate_normal, multivariate_t
 import matplotlib.pyplot as plt
-import seaborn as sns
 from modules.plot_helpers import colors
 from modules.plot_helpers import plot_confregion_bivariate_t
 from modules.priors import standard_prior_params
@@ -220,12 +219,12 @@ class StatisticalModel:
         plots the confidence regions associated with the predictive prior (left panel)
         and prior predictive (right panel); these are bivariate t distributions
 
-        :param axs: axes used for plotting, array-like
-        :param num_samples: number of requested samples
-        :param kind: "predictive_y", "marginal_mu", "marginal_Sigma", or "none"
-        :param based_on: either using the prior or posterior
         :param plot_data: add scatter plot of underlying data (boolean)
-        :param levels: confidence level
+        :param levels: confidence level, array-like
+        :param set_xy_limits: set x/y axis limits to default values
+        :param set_xy_lbls: set x/y axis labels to default labels
+        :param place_legend: adds a legend to the panels
+        :param validate: validate confidence ellipses
         :return: None
         """
         from plot_helpers import cm
