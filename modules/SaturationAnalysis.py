@@ -65,59 +65,63 @@ class SaturationAnalysis:
                                 configs=[DataSetSampleConfig(data_set=val, sample_kwargs=sample_kwargs)])
             self.multiverse(scenario=scenario, num_realizations=1, quantities=None, prior_params=None)
 
-    def multiverse(self, scenario=None, num_realizations=10, quantities=None, prior_params=None, progressbar=True):
+    def multiverse(self, scenario=None, num_realizations=10, levels=0.95, quantities=None,
+                   prior_params=None, progressbar=True,
+                   num_samples=1, num_samples_mu_Sigma=100000):
+        if levels is None:
+            levels = np.array((0.5, 0.8, 0.95, 0.99))
+        levels = np.atleast_1d(levels)
+
+        quantiles = (1-levels)/2
+        quantiles = np.concatenate((quantiles, [0.5], 1-quantiles))
+
         pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.pdf_output_path}/{scenario.label}.pdf")
         samples = pd.DataFrame()
         for irealiz in tqdm(range(num_realizations), desc="MC sampling", disable=not progressbar):
             # set up canvas (and draw saturation box)
             model = model_from_scenario(scenario, quantities=quantities, prior_params=prior_params)
-            fig, axs = plt.subplots(1, 2, figsize=(2*6.8*cm, 6.8*cm), constrained_layout=True)
-            for ax in axs:
-                self.drischler_satbox.plot(ax=ax, plot_scatter=False,
-                                           plot_box_estimate=True, place_legend=False, add_axis_labels=False)
-                model.data.plot(ax=ax, x="rho0", y="E/A", linestyle="None",
-                                marker="o", c="k", ms=1, zorder=20, alpha=0.2)
-            # print(model.sanity_check(num_samples=100000, based_on="prior", do_print=True))
 
             # store data from current universe (for universe-averaging later on)
             tmp = model.sample_predictive_bf(return_predictive_only=False, based_on="posterior",
-                                             num_samples=1, num_samples_mu_Sigma=10000)  # 100000
+                                             num_samples=num_samples,
+                                             num_samples_mu_Sigma=num_samples_mu_Sigma)  # 100000
             tmp["universe"] = irealiz
             samples = pd.concat((samples, tmp))
 
             # plot predictive prior and predictive posterior (right panel)
-            for iax, ax in enumerate(axs):
-                bon = "prior" if iax == 0 else "posterior"
-                model.plot(ax=ax, num_samples=50000, plot_data=False, based_on=bon,
-                           set_xy_limits=False, set_xy_lbls=False, place_legend=False)  #500000
-                ax.set_title(bon)
-                # ax.set_xlim(0.145, 0.175)  # (0.135, 0.185)
-                # ax.set_ylim(-16.5, -14.75)  # (-17.0, -14.7)
+            fig, axs = model.plot_predictives(plot_data=True, levels=None, num_pts=10000000,
+                                             set_xy_limits=True, set_xy_lbls=True, place_legend=True,
+                                             validate=False)
             pdf.savefig(fig)
-            fig.clear()
+
+            figsAxs = model.plot_predictives_corner(plot_data=True, levels=None, show_box_in_marginals=False,
+                                                    place_legend=True, validate=False)
+            for figAx in figsAxs:
+                pdf.savefig(figAx[0])
 
         # plot multi-universe average of the posterior predictive (corner plot)
         names = ["predictive rho0", "predictive E/A"]
-        labels = [r"$n_0$", r"$E_0/A$"]
-        n_std = 2  # e.g., 86% will correspond to 2 sigma in 2 dimensions
+        labels = ['Sat. Density $n_0$ [fm$^{-3}$]', 'Sat. Energy $E_0/A$ [MeV]']
         fig, axs = plt.subplots(2, 2, figsize=(2*6.8*cm, 2*6.8*cm))
 
         data = az.from_dict(posterior={lbl: samples[lbl] for lbl in names})
         corner.corner(data,  # var_names=names,
                       labels=labels,
-                      quantiles=(0.025, 0.5, 0.975),  # TODO: 2 sigma hard-coded
-                      title_quantiles=(0.025, 0.5, 0.975),
-                      levels=(1 - np.exp(-n_std**2 / 2),),
-                      bins=50,
+                      quantiles=quantiles,
+                      # title_quantiles=(0.025, 0.5, 0.975),
+                      levels=levels,
+                      bins=40,
                       plot_datapoints=False, plot_density=False,
-                      show_titles=True, title_fmt=".3f", title_kwargs={"fontsize": 8}, fig=fig)
+                      title_fmt=".3f", title_kwargs={"fontsize": 8}, fig=fig)
+
         self.drischler_satbox.plot(ax=axs[1, 0], plot_scatter=False, plot_box_estimate=True,
                                    place_legend=False, add_axis_labels=False)
-        self.eft_predictions.plot(ax=axs[1, 0])
+        # self.eft_predictions.plot(ax=axs[1, 0])
         # self.plot_contraints()
 
-        axs[0, 0].set_xlim(0.145, 0.175)
-        axs[1, 0].set_xlim(0.145, 0.175)
+        for row in axs[:, 0]:
+            row.set_xlim(0.145, 0.175)
+
         axs[1, 0].set_ylim(-16.5, -14.7)
         axs[1, 1].set_xlim(-16.5, -14.7)
 
@@ -151,10 +155,10 @@ def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
         ax.set_xlim(0.14, 0.18)
         ax.set_ylim(-18., -14.)
 
-        ax.set_xlabel('Saturation Density $n_0$ [fm$^{-3}$]')
+        ax.set_xlabel('Sat. Density $n_0$ [fm$^{-3}$]')
 
         if iprior_params == 0:
-            ax.set_ylabel('Saturation Energy $E_0/A$ [MeV]')
+            ax.set_ylabel('Sat. Energy $E_0/A$ [MeV]')
         else:
             ax.set_yticklabels([])
 

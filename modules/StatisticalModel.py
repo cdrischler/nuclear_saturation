@@ -229,8 +229,7 @@ class StatisticalModel:
         :return: None
         """
         from plot_helpers import cm
-        fig, axs = plt.subplots(1, 2, figsize=(17.8*cm, 8.6*cm), sharex=True, sharey=True,
-                                )#tight_layout=True)
+        fig, axs = plt.subplots(1, 2, figsize=(17.8*cm, 8.6*cm), sharex=True, sharey=True)  # tight_layout=True)
         # fig.tight_layout(pad=1.5)
         fig.subplots_adjust(
             # left=lb, bottom=lb, right=tr, top=tr,
@@ -324,20 +323,19 @@ class StatisticalModel:
                     quantity = "n_0"
                     unit = "fm$^{-3}$"
                     title_fmt = ".3f"
-                    diag.axes.get_yaxis().set_visible(False)
                 else:
-                    y = np.linspace(-18, -12, 1000)
-                    x = t.pdf(y, df, loc=mu[idiag], scale=sigma) * sigma
+                    x = np.linspace(-18, -12, 1000)
+                    y = t.pdf(x, df, loc=mu[idiag], scale=sigma) * sigma
                     quantity = r"\frac{E_0}{A}"
                     unit = "MeV"
                     title_fmt = ".2f"
-                    diag.axes.get_xaxis().set_visible(False)
+
+                diag.axes.get_yaxis().set_visible(False)
 
                 diag.plot(x, y, c="k", ls='-', lw=2, alpha=1, label='t pdf')
 
-                orientation = "vertical" if idiag == 0 else "horizontal"
                 conf_intervals = plot_confregion_univariate_t(mu[idiag], sigma, df, ax=diag, alpha=None, num_pts=100000000,
-                plot_hist=False, validate=validate, orientation=orientation, atol=1e-3)
+                plot_hist=False, validate=validate, orientation="vertical", atol=1e-3)
 
                 fmt = "{{0:{0}}}".format(title_fmt).format
                 title = r"${{{1}}} \pm {{{2}}}$ {{{3}}} ({{{4:.0f}}}\%)"
@@ -352,22 +350,26 @@ class StatisticalModel:
                              box_params["rho0"][0]+box_params["rho0"][1],
                              zorder=-1, alpha=0.5, color='lightgray')
 
-                axs[1, 1].axhspan(box_params["E/A"][0]-box_params["E/A"][1],
+                axs[1, 1].axvspan(box_params["E/A"][0]-box_params["E/A"][1],
                                   box_params["E/A"][0]+box_params["E/A"][1],
                                   zorder=-1, alpha=0.5, color='lightgray')
 
             for row in axs[:, 0]:
                 row.set_xlim(0.13, 0.18)
 
-            for col in axs[1, :]:
-                col.set_ylim(-16.5, -15.00)
+            axs[1, 1].set_xlim(-16.5, -15.00)
+            for elem in axs[1, :]:
+                elem.tick_params(axis='x', labelrotation = 45)
 
-            axs[0,0].axes.xaxis.set_ticklabels([])
-            # axs[0,0].axes.yaxis.set_ticklabels([])
-            # axs[1,1].axes.xaxis.set_ticklabels([])
-            axs[1,1].axes.yaxis.set_ticklabels([])
+            axs[0, 0].axes.xaxis.set_ticklabels([])
+            # axs[0, 0].axes.yaxis.set_ticklabels([])
+            # axs[1, 1].axes.xaxis.set_ticklabels([])
+            # axs[1, 1].axes.yaxis.set_ticklabels([])
 
             axs[1, 0].set_xlabel(self.xlabel)
+            axs[1, 1].set_xlabel(self.ylabel)
+            for elem in axs[1, :]:
+                elem.xaxis.set_label_coords(0.5, -.25)
             axs[1, 0].set_ylabel(self.ylabel)
 
             if place_legend:
@@ -427,7 +429,6 @@ class StatisticalModel:
             ret_array.append([fig, axs])
         return ret_array
 
-
     @staticmethod
     def set_xy_lim(ax):
         ax.set_xlim(0.145, 0.175)
@@ -435,11 +436,11 @@ class StatisticalModel:
 
     @property
     def xlabel(self):
-        return 'Saturation Density $n_0$ [fm$^{-3}$]'
+        return 'Sat. Density $n_0$ [fm$^{-3}$]'
 
     @property
     def ylabel(self):
-        return 'Saturation Energy $E_0/A$ [MeV]'
+        return 'Sat. Energy $E_0/A$ [MeV]'
 
     def set_xy_lbls(self, ax):
         ax.set_xlabel(self.xlabel)
