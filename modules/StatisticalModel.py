@@ -213,7 +213,7 @@ class StatisticalModel:
         shape_matrix = params["Psi"]*(params["kappa"]+1)/(params["kappa"]*df)
         return df, params["mu"], shape_matrix
 
-    def plot_predictives(self, plot_data=True, levels=None,
+    def plot_predictives(self, plot_data=True, levels=None, num_pts=10000000,
                          set_xy_limits=True, set_xy_lbls=True, place_legend=True, validate=False):
         """
         plots the confidence regions associated with the predictive prior (left panel)
@@ -221,6 +221,7 @@ class StatisticalModel:
 
         :param plot_data: add scatter plot of underlying data (boolean)
         :param levels: confidence level, array-like
+        :param num_pts: number of points used for validating the confidence regions
         :param set_xy_limits: set x/y axis limits to default values
         :param set_xy_lbls: set x/y axis labels to default labels
         :param place_legend: adds a legend to the panels
@@ -229,15 +230,19 @@ class StatisticalModel:
         """
         from plot_helpers import cm
         fig, axs = plt.subplots(1, 2, figsize=(17.8*cm, 8.6*cm), sharex=True, sharey=True,
-                                tight_layout=True)
-        fig.tight_layout(pad=1.5)
+                                )#tight_layout=True)
+        # fig.tight_layout(pad=1.5)
+        fig.subplots_adjust(
+            # left=lb, bottom=lb, right=tr, top=tr,
+            wspace=0.15, hspace=0.05
+        )
 
         for ibon, bon in enumerate(("prior", "posterior")):
             ax = axs[ibon]
             df, mu, shape_matrix = self.predictives_params(bon)
             plot_confregion_bivariate_t(ax=ax, mu=mu,
                             Sigma=shape_matrix, nu=df,
-                            alpha=levels, alpha_unit="decimal", num_pts=10000000,
+                            alpha=levels, alpha_unit="decimal", num_pts=num_pts,
                             plot_scatter=False, validate=validate)
             ax.set_title(f"{bon} predictive")
             if plot_data and self.data is not None:
@@ -280,12 +285,17 @@ class StatisticalModel:
             from plot_helpers import cm
             fig, axs = plt.subplots(2, 2, figsize=(9*cm, 1.2*8.6*cm), sharex=False, sharey=False)
 
+            fig.subplots_adjust(
+                # left=lb, bottom=lb, right=tr, top=tr,
+                wspace=0.08, hspace=0.08,
+            )
+
             # upper right panel
             axs[0, 1].grid(False)
             axs[0, 1].axis('off')
             axs[0, 1].text(0.05, 0.9, f"{bon} predictive", transform=axs[0, 1].transAxes)  #transAxes)
             axs[0, 1].text(0.05, 0.83, f"({self.prior_params['label'].lower()})", transform=axs[0, 1].transAxes)  # transAxes)
-            fig.tight_layout(pad=.5)
+            #fig.tight_layout(pad=.5)
 
             # lower left panel
             df, mu, shape_matrix = self.predictives_params(bon)
@@ -314,12 +324,14 @@ class StatisticalModel:
                     quantity = "n_0"
                     unit = "fm$^{-3}$"
                     title_fmt = ".3f"
+                    diag.axes.get_yaxis().set_visible(False)
                 else:
                     y = np.linspace(-18, -12, 1000)
                     x = t.pdf(y, df, loc=mu[idiag], scale=sigma) * sigma
                     quantity = r"\frac{E_0}{A}"
                     unit = "MeV"
                     title_fmt = ".2f"
+                    diag.axes.get_xaxis().set_visible(False)
 
                 diag.plot(x, y, c="k", ls='-', lw=2, alpha=1, label='t pdf')
 
@@ -344,11 +356,11 @@ class StatisticalModel:
                                   box_params["E/A"][0]+box_params["E/A"][1],
                                   zorder=-1, alpha=0.5, color='lightgray')
 
-            axs[0,0].set_xlim(0.13, 0.18)
-            axs[1,0].set_xlim(0.13, 0.18)
+            for row in axs[:, 0]:
+                row.set_xlim(0.13, 0.18)
 
-            axs[1,0].set_ylim(-16.5, -15.00)
-            axs[1,1].set_ylim(-16.5, -15.00)
+            for col in axs[1, :]:
+                col.set_ylim(-16.5, -15.00)
 
             axs[0,0].axes.xaxis.set_ticklabels([])
             # axs[0,0].axes.yaxis.set_ticklabels([])
@@ -361,7 +373,7 @@ class StatisticalModel:
             if place_legend:
                 axs[1, 0].legend(ncol=2, title="confidence level",
                                  prop={'size': 8}, frameon=False,
-                                 bbox_to_anchor=(1.8, 1.5), loc='center')
+                                 bbox_to_anchor=(1.6, 1.5), loc='center')
 
             ret_array.append([fig, axs])
         return ret_array

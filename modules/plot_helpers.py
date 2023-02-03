@@ -314,7 +314,7 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
 
 def plot_confregion_univariate_t(mu, Sigma, nu, ax=None, alpha=None, num_pts=100000000,
                                 plot_hist=False, validate=True, orientation="horizontal",
-                                atol=1e-3, **kwargs):
+                                atol=1e-3, plot_quantile="line", **kwargs):
     # pick current axis if none is specified
     if ax is None:
         ax = plt.gca()
@@ -349,10 +349,18 @@ def plot_confregion_univariate_t(mu, Sigma, nu, ax=None, alpha=None, num_pts=100
                 print(f"confidence ellipse at level '{alph}' validated.")
 
         kwargs = dict(zorder=-1, alpha=1, color=colors[ialph])
-        if orientation == "vertical":
-            ax.axvspan(current_interval["left"], current_interval["right"], **kwargs)
-        else:
-            ax.axhspan(current_interval["left"], current_interval["right"], **kwargs)
+        if plot_quantile == "band":
+            if orientation == "vertical":
+                ax.axvspan(current_interval["left"], current_interval["right"], **kwargs)
+            else:
+                ax.axhspan(current_interval["left"], current_interval["right"], **kwargs)
+        elif plot_quantile == "line":
+            kwargs = dict(zorder=-1, alpha=1, lw=0.8, ls="--", color=colors[ialph])
+            for quant in ("left", "right"):
+                if orientation == "vertical":
+                    ax.axvline(current_interval[quant], **kwargs)
+                else:
+                    ax.axhline(current_interval[quant], **kwargs)
 
     return np.array(conf_intervals)
 
