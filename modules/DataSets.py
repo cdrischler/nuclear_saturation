@@ -94,8 +94,8 @@ class GenericDataSet(DataSet):
         ret = self.get_data_frame(exclude=exclude)
         if isinstance(num_points, int):
             ret = self.get_data_frame(exclude=exclude).sample(num_points, replace=replace)
-        elif num_points != "all":
-            raise ValueError(f"'num_points has to be int or 'all', got {num_points}")
+        elif num_points is not None:
+            raise ValueError(f"'num_points has to be int or 'None', got {num_points}")
         if df is not None:
             ret = pd.concat((df, ret))
         return ret
