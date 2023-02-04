@@ -101,7 +101,8 @@ class GenericDataSet(DataSet):
         return ret
 
     def plot(self, ax=None, plot_scatter=True, plot_box_estimate=False, marker_size=8,
-             place_legend=True, add_axis_labels=True, exclude=None, **kwargs):
+             place_legend=True, add_axis_labels=True, exclude=None, zorder=-5,
+             facecolor='lightgray', edgecolor='gray', **kwargs):
         if ax is None:
             ax = plt.gca()
 
@@ -109,8 +110,8 @@ class GenericDataSet(DataSet):
             res = self.box_estimate(exclude=exclude)
             center_uncert = [[res["rho0"][i], res["E/A"][i]] for i in range(2)]
             plot_rectangle(center_uncert[0], center_uncert[1], ax=ax,
-                           facecolor='lightgray', edgecolor='gray',
-                           alpha=0.4, zorder=-5)
+                           facecolor=facecolor, edgecolor=edgecolor,
+                           alpha=0.4, zorder=zorder, **kwargs)
 
         if plot_scatter:
             dframe = self.get_data_frame(exclude=exclude)

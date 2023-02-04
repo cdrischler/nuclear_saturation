@@ -277,9 +277,10 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
                       width=axes_length[0],
                       height=axes_length[1],
                       angle=np.rad2deg(angle), **kwargs)
-
-        ell.set_facecolor('None')
-        ell.set_edgecolor(colors[iellipse])
+        if "facecolor" not in kwargs.keys():
+            ell.set_facecolor('None')
+        if "edgecolor" not in kwargs.keys():
+            ell.set_edgecolor(colors[iellipse])
         ell.set_label(f"{alpha[iellipse]*100:.0f}\%")
         ax.add_patch(ell)
                 
