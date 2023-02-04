@@ -66,7 +66,7 @@ class SaturationAnalysis:
             self.multiverse(scenario=scenario, num_realizations=1, quantities=None, prior_params=None)
 
     def multiverse(self, scenario=None, num_realizations=10, levels=0.95, quantities=None,
-                   prior_params=None, progressbar=True,
+                   prior_params=None, progressbar=True, debug=False,
                    num_samples=1, num_samples_mu_Sigma=100000):
         if levels is None:
             levels = np.array((0.5, 0.8, 0.95, 0.99))
@@ -108,11 +108,34 @@ class SaturationAnalysis:
         corner.corner(data,  # var_names=names,
                       labels=labels,
                       quantiles=quantiles,
+                      verbose=debug,
                       # title_quantiles=(0.025, 0.5, 0.975),
                       levels=levels,
                       bins=40,
                       plot_datapoints=False, plot_density=False,
                       title_fmt=".3f", title_kwargs={"fontsize": 8}, fig=fig)
+
+        # fix corner's bug, see https://github.com/dfm/corner.py/issues/107
+        use_level = 0.95
+        title_template = r"${{{1}}} \pm {{{2}}}$ {{{3}}} ({{{4:.0f}}}\%)"
+        for iname, name in enumerate(names):
+            mu = np.mean(samples[name])
+            disp = mu - np.percentile(samples[name], (1-use_level)/2*100)
+            if debug:
+                print("expected means and both-sided errors", mu, disp, mu-disp, mu+disp)
+
+            if iname == 0:
+                quantity = "n_0"
+                unit = "fm$^{-3}$"
+                title_fmt = ".3f"
+            else:
+                quantity = r"\frac{E_0}{A}"
+                unit = "MeV"
+                title_fmt = ".2f"
+
+            fmt = "{{0:{0}}}".format(title_fmt).format
+            title = title_template.format(quantity, fmt(mu), fmt(disp), unit, use_level*100)
+            axs[iname, iname].set_title(title)
 
         self.drischler_satbox.plot(ax=axs[1, 0], plot_scatter=False, plot_box_estimate=True,
                                    place_legend=False, add_axis_labels=False)
@@ -128,6 +151,11 @@ class SaturationAnalysis:
         pdf.savefig(fig)
         pdf.close()
 
+        from plot_helpers import fit_bivariate_t
+        tt = fit_bivariate_t(samples[names].to_numpy(), alpha_fit=0.3, nu_limits=(3, 40),
+                             tol=1e-3, print_status=False)
+        print(tt)
+        print(model.posterior_params)
 
 def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
     prior_params_list = np.atleast_1d(prior_params_list)

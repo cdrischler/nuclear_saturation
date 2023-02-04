@@ -424,7 +424,7 @@ class StatisticalModel:
                 disp = mu - np.percentile(data[:, ind], (1-level)/2*100)
                 if debug:
                     print("expected means and both-sided errors", mu, disp, mu-disp, mu+disp)
-                axs[ind, ind].set_title(f"${mu:.3f} \pm {disp:.3f}$")
+                axs[ind, ind].set_title(f"${mu:.3f} \pm {disp:.3f}$ ({level}\%)")
 
             ret_array.append([fig, axs])
         return ret_array
