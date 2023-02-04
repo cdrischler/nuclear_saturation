@@ -14,6 +14,8 @@ class StatisticalModel:
         self.quantities = quantities if quantities else ["rho0", "E/A"]
         self.prior_params = prior_params if prior_params else standard_prior_params
         self._validate_matrix(self.prior_params["Psi"], raise_error=True)
+        if self.d != 2:
+            raise ValueError("dimension is expected to be 2, got '{self.d}'")
 
     @property
     def n(self):
@@ -73,6 +75,11 @@ class StatisticalModel:
             * https://en.wikipedia.org/wiki/Normal-inverse-Wishart_distribution#Posterior_distribution_of_the_parameters
             * Equations (250) through (254) in Murphy's notes: https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf
             * page 73 (pdf page 83) in Gelman et al.'s book: http://www.stat.columbia.edu/~gelman/book/BDA3.pdf
+
+        NOTE: the posterior is given by
+           P(\boldsymbol{ y}^{\text{new}} | \mathcal{D})
+                \sim t_{\nu_n -d +1} \Big( \vb*{\mu_n}, \vb*{\Lambda_n}(k_n+1)/(k_n(\nu_n-d+1)) \Big),
+        So, e.g., `ret["nu"]` is not the dof of the posterior!
 
         :return: parameters of the distribution
         """
@@ -206,7 +213,13 @@ class StatisticalModel:
             print("passed:", stat)
         return stat
 
-    def predictives_params(self, based_on="posterior" ):
+    def predictives_params(self, based_on="posterior"):
+        """
+        returns the parameters of the posterior predictive and prior predictive
+        :param based_on: either "posterior" or "prior"
+        :return: parameters of the `based_on` predictive; note that these are
+        different from the prior and posterior parameters
+        """
         params = self.posterior_params if based_on == "posterior" else self.prior_params
         # Eq. (258) in Murphy's notes: https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf
         df = params["nu"] - self.d + 1
