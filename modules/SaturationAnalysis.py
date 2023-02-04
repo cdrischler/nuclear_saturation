@@ -117,6 +117,7 @@ class SaturationAnalysis:
                       bins=bins,
                       # color='r',
                       plot_datapoints=False, plot_density=False,
+                      no_fill_contours=True, fill_contours=None,
                       title_fmt=".3f", title_kwargs={"fontsize": 8}, fig=fig)
 
         # fix bug in `corner`, see https://github.com/dfm/corner.py/issues/107
@@ -141,7 +142,7 @@ class SaturationAnalysis:
             axs[iname, iname].set_title(title)
 
         self.drischler_satbox.plot(ax=axs[1, 0], plot_scatter=False, plot_box_estimate=True,
-                                   place_legend=False, add_axis_labels=False, zorder=60, facecolor="none")
+                                   place_legend=False, add_axis_labels=False)  # , zorder=60, facecolor="none")
         # self.eft_predictions.plot(ax=axs[1, 0])
         # from plot_helpers import colors
         # axs[1, 0].scatter(samples[names[0]], samples[names[1]], s=4, c=colors[4])  # avoid: a LOT of samples!
@@ -200,7 +201,7 @@ def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
         plot_confregion_bivariate_t(ax=ax, mu=mu,
                                     Sigma=shape_matrix, nu=df,
                                     alpha=levels, alpha_unit="decimal", num_pts=10000000,
-                                    plot_scatter=False, validate=False, edgecolor='k', facecolor="None")
+                                    plot_scatter=False, validate=False)
 
         ax.set_title(f"Prior {prior_params['label']}")
 

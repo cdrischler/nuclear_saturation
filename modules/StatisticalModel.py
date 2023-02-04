@@ -443,6 +443,7 @@ class StatisticalModel:
                           levels=(level,),
                           bins=60, verbose=debug,
                           plot_datapoints=False, plot_density=False,
+                          no_fill_contours=True, fill_contours=None,
                           title_fmt=".6f", title_kwargs={"fontsize": 8}, fig=fig)
 
             # There's a bug in `corner` version 2.2.1. The title will always show
