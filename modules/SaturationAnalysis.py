@@ -37,16 +37,19 @@ class SaturationAnalysis:
         self.drischler_satbox = drischler_satbox  # GenericDataSet(filenames=["satpoints_dutra_skyrme.csv", "satpoints_kortelainen.csv"])
         self.eft_predictions = EftPredictions(show_result=True)
 
-    def plot_constraints(self, dft_constraints=None, eft=True, dft_conf_level=0.8647,
-                        eft_conf_level=0.95, eft_plot_scatter=True):
+    def plot_constraints(self, dft_constraints=None, eft=False, dft_conf_level=0.95,
+                         eft_conf_level=0.95, eft_plot_scatter=True):
         pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.pdf_output_path}/constraints.pdf")
         fig, ax = plt.subplots(1, 1, figsize=(1.25*6.8*cm, 1.2*6.8*cm))
         self.drischler_satbox.plot(ax=ax, plot_scatter=False, plot_box_estimate=True, marker_size=8,
                                    place_legend=False, add_axis_labels=False, exclude=None)
 
         dft_constraints = DEFAULT_DFT_CONSTRAINTS if dft_constraints is None else dft_constraints
+        additional_legend_handles = []
         for key, val in dft_constraints.items():
-            val.plot(ax=ax, level=dft_conf_level)
+            handles = val.plot(ax=ax, level=dft_conf_level, additional_legend_handles=additional_legend_handles)
+            if handles is not None:
+                additional_legend_handles.append(handles)
             pdf.savefig(fig)
         if eft:
             self.eft_predictions.plot(ax=ax, level=eft_conf_level, plot_scatter=eft_plot_scatter)

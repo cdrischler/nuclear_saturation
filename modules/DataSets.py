@@ -1,6 +1,6 @@
 import sys; sys.path.append("./modules")
 from abc import ABC, abstractmethod
-from plot_helpers import plot_rectangle, confidence_ellipse_mean_cov, colors, colorset
+from plot_helpers import plot_rectangle, confidence_ellipse_mean_cov, colors, colorset, flatui
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -73,13 +73,14 @@ class DataSet(ABC):
 
     @staticmethod
     def set_axes_labels(ax):
-        ax.set_xlabel('Saturation Density $n_0$ [fm$^{-3}$]')
-        ax.set_ylabel('Saturation Energy $E_0/A$ [MeV]')
-        ax.set_title("Empirical saturation box")
+        ax.set_xlabel('Sat. Density $n_0$ [fm$^{-3}$]')
+        ax.set_ylabel('Sat. Energy $E_0/A$ [MeV]')
+        ax.set_title("Nuclear Saturation: Empirical Constraints")
 
     @staticmethod
-    def legend(ax):
-        ax.legend(ncol=2, loc="upper center", prop={'size': 6})
+    def legend(ax, **kwargs):
+        ax.legend(ncol=2, loc="upper left",  # title="empirical constraints",
+                  frameon=False, prop={'size': 6}, **kwargs)
 
 
 class GenericDataSet(DataSet):
@@ -119,11 +120,23 @@ class GenericDataSet(DataSet):
                 idxs = np.where(dframe["class"] == clbls)
                 ax.scatter(dframe.iloc[idxs]["rho0"], dframe.iloc[idxs]["E/A"],
                            #color="k",
-                           s=marker_size, label=clbls)
+                           s=marker_size, label=self.humanize_class_labels(clbls))
         if add_axis_labels:
             super().set_axes_labels(ax)
         if place_legend:
             super().legend(ax)
+        super().set_axes_ranges(ax)
+
+    def humanize_class_labels(self, clbl):
+        trans = dict(
+            dutra_skyrme="Dutra et al. (\'12)",
+            kortelainen="Kortelainen et al. (\'14)",
+            brown="Brown (\'21)",
+            dutra_rmf="Dutra et al. (\'14)"
+        )
+        default_value = clbl[0].upper()
+        default_value = default_value.replace("_", " ")
+        return trans.get(clbl, default_value).replace(" et al.", "+")  # " $\it{et~al.}$")
 
     def box_estimate(self, print_result=False, exclude=None):
         result = dict()
@@ -208,7 +221,7 @@ class NormDistDataSet(DataSet):
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, level=0.8647, marker_size=8, add_legend=True, set_axis_labels=True,
+    def plot(self, ax=None, level=0.95, marker_size=8, add_legend=True,
              add_axis_labels=True, exclude=None, **kwargs):
         if ax is None:
             ax = plt.gca()
@@ -220,12 +233,11 @@ class NormDistDataSet(DataSet):
                                         facecolor=colorset[irow],
                                         label=f'{row["label"]} ({level*100:.0f}\%)')
 
-        if set_axis_labels:
-            super().set_axes_ranges(ax)
         if add_axis_labels:
             super().set_axes_labels(ax)
         if add_legend:
             super().legend(ax)
+        super().set_axes_ranges(ax)
 
 
 class KernelDensityEstimate(DataSet):
@@ -315,11 +327,18 @@ class KernelDensityEstimate(DataSet):
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, level=0.8647, num_distr=1, fill=True, plot_scatter=False, marker_size=8,
+    def plot(self, ax=None, level=0.95, num_distr=1, fill=True, plot_scatter=False, marker_size=8,
              add_legend=True, add_axis_labels=True, exclude=None, use_seaborn=False, **kwargs):
         if ax is None:
             ax = plt.gca()
 
+        if "additional_legend_handles" not in kwargs.keys():
+            print("yeah")
+            additional_legend_handles = []
+        else:
+            additional_legend_handles = kwargs["additional_legend_handles"]
+
+        import matplotlib.patches as mpatches
         for icls, cls in enumerate(self.data_frame["class"].unique()[:num_distr]):
             dframe_filtered = self.get_data_frame(exclude=exclude)
             mask = dframe_filtered["class"] == cls
@@ -332,24 +351,43 @@ class KernelDensityEstimate(DataSet):
                             label=f"{cls} ({(1-levels[0])*100:.0f}\%)",
                             legend=True,
                             color=colors[-icls])
-                # TODO: sns.kdeplot() seems to have issues with displaying the handles in legends
+                # Note: sns.kdeplot() seems to have issues with displaying the handles in legends
             else:
+                if "schunck" in cls.lower():
+                    use_colorset = sorted(colors)
+                    label = "Schunk $\it{et~al.}$ (\'20" + f", {level*100:.0f}\%)"
+                elif "giuliani" in cls.lower():
+                    use_colorset = sorted(flatui)
+                    label = "Giuliani $\it{et~al.}$ (\'21" + f", {level*100:.0f}\%)"
+                else:
+                    use_colorset = sorted(colorset)
+                    label = cls
+
+                color = use_colorset[-icls]
                 corner.hist2d(x=dframe_filtered[mask]["rho0"].to_numpy(),
                               y=dframe_filtered[mask]["E/A"].to_numpy(),
-                              bins=20, range=None, weights=None,
-                              levels=[level], smooth=None, ax=ax, color=colors[-icls-2],
-                              quiet=False, plot_datapoints=plot_scatter, plot_density=True,
-                              plot_contours=True, no_fill_contours=False, fill_contours=fill,
+                              bins=25, range=None, weights=None,
+                              levels=np.atleast_1d(level), smooth=None, ax=ax, color=color,
+                              quiet=False, plot_datapoints=plot_scatter, plot_density=False,
+                              plot_contours=True, no_fill_contours=True, fill_contours=None,
                               contour_kwargs=None, contourf_kwargs=None, data_kwargs=None,
                               pcolor_kwargs=None, new_fig=False)
+
+                patch = mpatches.Patch(color=color, label=label.replace(" $\it{et~al.}$", "+"))
+                additional_legend_handles.append(patch)
 
             #if plot_scatter:
             #    ax.scatter(x=dframe_filtered[mask]["rho0"], y=dframe_filtered[mask]["E/A"], label="scatter")
 
+        handles, labels = ax.get_legend_handles_labels()
+        for item in additional_legend_handles:
+            handles.append(item)
+
         if add_axis_labels:
             super().set_axes_labels(ax)
         if add_legend:
-            super().legend(ax)
+            super().legend(ax, handles=handles)
+        super().set_axes_ranges(ax)
 
 
 @dataclass
