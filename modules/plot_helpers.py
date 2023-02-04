@@ -400,7 +400,7 @@ def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status
         print(f"Error while fitting bivariate t distribution with finite dof: '{str(e)}'; assuming Normal distribution")
         nu_est = np.inf
         Psi_est = cov_est
-    return mu_est, Psi_est, np.rint(nu_est)
+    return {"mu": mu_est, "Psi": Psi_est, "df": np.rint(nu_est)}
 
 
 def test_fit_bivariate_t(df=7, M=None, mu=None, size=10000000, tol=1e-3, print_status=True):

@@ -275,7 +275,7 @@ class StatisticalModel:
                             plot_scatter=False, validate=validate)
             ax.set_title(f"{bon} predictive")
             if plot_data and self.data is not None:
-                ax.scatter(self.data["rho0"], self.data["E/A"], s=4, c=colors[5])
+                ax.scatter(self.data["rho0"], self.data["E/A"], s=4, c=colors[4])
 
             from modules.SaturationAnalysis import drischler_satbox
             drischler_satbox.plot(ax=ax, plot_scatter=False, plot_box_estimate=True,
@@ -331,10 +331,10 @@ class StatisticalModel:
             plot_confregion_bivariate_t(ax=axs[1, 0], mu=mu,
                                         Sigma=shape_matrix, nu=df,
                                         alpha=levels, alpha_unit="decimal", num_pts=10000000,
-                                        plot_scatter=False, validate=validate, edgecolor='k', facecolor="None")
+                                        plot_scatter=False, validate=validate)
 
             if plot_data and self.data is not None:
-                axs[1, 0].scatter(self.data["rho0"], self.data["E/A"], s=4, c=colors[5])
+                axs[1, 0].scatter(self.data["rho0"], self.data["E/A"], s=4, c=colors[4])
 
             from modules.SaturationAnalysis import drischler_satbox
             drischler_satbox.plot(ax=axs[1, 0], plot_scatter=False, plot_box_estimate=True,
@@ -453,7 +453,7 @@ class StatisticalModel:
                 mu = np.mean(data[:, ind])
                 disp = mu - np.percentile(data[:, ind], (1-level)/2*100)
                 if debug:
-                    print("expected means and both-sided errors", mu, disp, mu-disp, mu+disp)
+                    print("expected means and two-sided errors", mu, disp, mu-disp, mu+disp)
                 axs[ind, ind].set_title(f"${mu:.3f} \pm {disp:.3f}$ ({level}\%)")
 
             ret_array.append([fig, axs])

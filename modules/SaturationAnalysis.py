@@ -67,6 +67,7 @@ class SaturationAnalysis:
 
     def multiverse(self, scenario=None, num_realizations=10, levels=None, quantities=None,
                    prior_params=None, progressbar=True, debug=False, bins=100,
+                   plot_fitted_conf_regions=False,
                    num_samples=1, num_samples_mu_Sigma=10000000, **kwargs):
         if levels is None:
             levels = np.array((0.5, 0.8, 0.95, 0.99))
@@ -112,7 +113,7 @@ class SaturationAnalysis:
                       verbose=debug,
                       # title_quantiles=None,  # bug in current version of `corner`
                       levels=levels,
-                      facecolor=None,
+                      facecolor="none",
                       bins=bins,
                       # color='r',
                       plot_datapoints=False, plot_density=False,
@@ -140,9 +141,10 @@ class SaturationAnalysis:
             axs[iname, iname].set_title(title)
 
         self.drischler_satbox.plot(ax=axs[1, 0], plot_scatter=False, plot_box_estimate=True,
-                                   place_legend=False, add_axis_labels=False)
+                                   place_legend=False, add_axis_labels=False, zorder=60, facecolor="none")
         # self.eft_predictions.plot(ax=axs[1, 0])
-        # self.plot_constraints()
+        # from plot_helpers import colors
+        # axs[1, 0].scatter(samples[names[0]], samples[names[1]], s=4, c=colors[4])  # avoid: a LOT of samples!
 
         for row in axs[:, 0]:
             row.set_xlim(0.145, 0.175)
@@ -150,26 +152,33 @@ class SaturationAnalysis:
         axs[1, 0].set_ylim(-16.5, -14.7)  # not that the axes are different
         axs[1, 1].set_xlim(-16.5, -14.7)
 
-        pdf.savefig(fig)
-        pdf.close()
-
+        # fit bivariate t distribution to samples; only accurate for large numbers of sampling points
         from plot_helpers import fit_bivariate_t
-        fit_res = fit_bivariate_t(samples[names].to_numpy(), alpha_fit=0.68, nu_limits=(3, 40),
+        fit = fit_bivariate_t(samples[names].to_numpy(), alpha_fit=0.68, nu_limits=(3, 40),
                                   tol=1e-3, print_status=debug)
         if debug:
-            print(fit_res)
+            print("fit results", fit)
             cov_est = np.cov(samples[names[0]], samples[names[1]])
             print("est cov matrix:", cov_est)
 
             # expected values
-            if num_realizations==1:
-                print("expected values")
+            if num_realizations == 1:
+                print("expected values:")
                 df, mu, shape_matrix = model.predictives_params("posterior")
                 print("exp df:", df)
                 print("exp mean:", mu)
                 print("exp cov matrix:", shape_matrix * df / (df-2))
 
-        return fit_res
+        if plot_fitted_conf_regions:
+            from plot_helpers import plot_confregion_bivariate_t
+            plot_confregion_bivariate_t(fit["mu"], fit["Psi"], fit["df"],
+                                        ax=axs[1, 0], alpha=levels, alpha_unit="decimal", num_pts=10000000,
+                                        plot_scatter=False, validate=False, zorder=100)  # linestyle=":"
+
+        axs[1, 0].legend(ncol=2, title="confidence level (fit)", prop={'size': 8}, frameon=False)
+        pdf.savefig(fig)
+        pdf.close()
+        return fit
 
 
 def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
