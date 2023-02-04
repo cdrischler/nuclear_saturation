@@ -97,7 +97,7 @@ class StatisticalModel:
         StatisticalModel._validate_matrix(ret["Psi"], raise_error=True)
         return ret
 
-    def sample_mu_Sigma(self, num_samples=1, based_on="posterior", random_state=None):
+    def sample_mu_Sigma(self, num_samples=1, based_on="posterior", fast_math=True, random_state=None):
         """
         Samples the posterior pr(\mu, \Sigma), which is a normal-inverse-Wishart distribution, in a two-step process.
         For more information on the sampling, see:
@@ -105,19 +105,29 @@ class StatisticalModel:
             * page 73 (pdf page 83) in Gelman et al.'s book: http://www.stat.columbia.edu/~gelman/book/BDA3.pdf
 
         :param num_samples: number of samples
-        :based_on: either "posterior" or "prior"
+        :param based_on: either "posterior" or "prior"
+        :param fast_math: speed up calculations by rescaling seed normal distribution (much faster!); boolean
         :param random_state: state of the random number generator
         :return: returns `num_samples` samples of either the posterior or prior
         """
         if based_on not in ("posterior", "prior"):
             raise ValueError(f"Got unknown prior/posterior request '{based_on}'.")
         params = self.posterior_params if based_on=="posterior" else self.prior_params
-        Sigmas = invwishart.rvs(df=params["nu"], scale=params["Psi"], size=num_samples, random_state=None)
+        Sigmas = invwishart.rvs(df=params["nu"], scale=params["Psi"], size=num_samples, random_state=random_state)
 
         if num_samples == 1:
             Sigmas = np.expand_dims(Sigmas, 0)
-        mus = np.array([multivariate_normal.rvs(mean=params["mu"], cov=Sigma/params["kappa"],
-                                                size=1, random_state=random_state) for Sigma in Sigmas])
+        if fast_math:
+            # much faster to sample all requested points at once from a seed normal distribution N(mu=0, sigma=unity)
+            # and then rescale the obtained sample to the target mean and target covariance matrix; see also
+            # https://stackoverflow.com/questions/42837646/fast-way-of-drawing-multivariate-normal-in-python
+            seeds = np.random.multivariate_normal(np.zeros(2), np.eye(2), size=num_samples)
+            Ls = np.linalg.cholesky(Sigmas/params["kappa"])
+            mus = params["mu"] + np.einsum('nij,njk->nik', Ls, seeds[:, :, np.newaxis])[:, :, 0]
+        else:
+            mus = np.array([multivariate_normal.rvs(mean=params["mu"], cov=Sigma/params["kappa"],
+                                                    size=1, random_state=None) for Sigma in Sigmas])
+            # note in the line above that `random_state=None`; using a given state would bias the results
         return mus, Sigmas
 
     def sample(self, num_samples=1, kind="predictive_y", based_on="posterior", random_state=None, validate=True):
@@ -161,22 +171,29 @@ class StatisticalModel:
                                       shape=shape_matrix,
                                       size=num_samples, random_state=random_state)  # Eqs. (256) and (258) in Murphy's notes
 
-    def sample_predictive_bf(self, num_samples=1, num_samples_mu_Sigma=1,
+    def sample_predictive_bf(self, num_samples=1, num_samples_mu_Sigma=100000, fast_math=True,
                              return_predictive_only=True, based_on="posterior", random_state=None):
         """
-        Samples the posterior predictive brute-force in the two-step process described in
+        Samples the posterior predictive or prior predictive brute-force in the two-step process described in
         https://en.wikipedia.org/wiki/Normal-inverse-Wishart_distribution#Posterior_distribution_of_the_parameters
 
         :param num_samples: number of requested samples of the predictive prior/posterior
         :param num_samples_mu_Sigma: number of requested samples of (mu, Sigma)
+        :param fast_math: speed up calculations by rescaling seed normal distribution (much faster!); boolean
         :param based_on: either using the prior or posterior
         :param return_predictive_only: returns prior/posterior predictive samples but not the associated samples of (mu, Sigma)
         :param random_state: state of random number generator
         :return: `num_samples` samples in an array with columns associated with (density, energy/particle)
         or pandas DataFrame with full set of results (predictive_y, my, Sigma) depending on the argument `return_predictive_only`
         """
-        mus, Sigmas = self.sample_mu_Sigma(num_samples=num_samples_mu_Sigma, based_on=based_on, random_state=random_state)
-        predictive = np.array([multivariate_normal.rvs(mean=mu, cov=Sigma, size=num_samples) for mu, Sigma in zip(mus, Sigmas)])
+        mus, Sigmas = self.sample_mu_Sigma(num_samples=num_samples_mu_Sigma, based_on=based_on,
+                                           fast_math=fast_math, random_state=random_state)
+        if fast_math:
+            seeds = np.random.multivariate_normal(np.zeros(2), np.eye(2), size=num_samples_mu_Sigma)
+            Ls = np.linalg.cholesky(Sigmas)
+            predictive = mus + np.einsum('nij,njk->nik', Ls, seeds[:, :, np.newaxis])[:, :, 0]
+        else:
+            predictive = np.array([multivariate_normal.rvs(mean=mu, cov=Sigma, size=num_samples) for mu, Sigma in zip(mus, Sigmas)])
         if return_predictive_only:
             return predictive
         else:
