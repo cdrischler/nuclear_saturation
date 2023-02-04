@@ -65,9 +65,9 @@ class SaturationAnalysis:
                                 configs=[DataSetSampleConfig(data_set=val, sample_kwargs=sample_kwargs)])
             self.multiverse(scenario=scenario, num_realizations=1, quantities=None, prior_params=None)
 
-    def multiverse(self, scenario=None, num_realizations=10, levels=0.95, quantities=None,
-                   prior_params=None, progressbar=True, debug=False,
-                   num_samples=1, num_samples_mu_Sigma=100000):
+    def multiverse(self, scenario=None, num_realizations=10, levels=None, quantities=None,
+                   prior_params=None, progressbar=True, debug=False, bins=100,
+                   num_samples=1, num_samples_mu_Sigma=10000000, **kwargs):
         if levels is None:
             levels = np.array((0.5, 0.8, 0.95, 0.99))
         levels = np.atleast_1d(levels)
@@ -89,17 +89,18 @@ class SaturationAnalysis:
             samples = pd.concat((samples, tmp))
 
             # plot predictive prior and predictive posterior (right panel)
-            fig, axs = model.plot_predictives(plot_data=True, levels=None, num_pts=10000000,
+            fig, axs = model.plot_predictives(plot_data=True, levels=levels, num_pts=10000000,
                                              set_xy_limits=True, set_xy_lbls=True, place_legend=True,
                                              validate=False)
             pdf.savefig(fig)
 
-            figsAxs = model.plot_predictives_corner(plot_data=True, levels=None, show_box_in_marginals=False,
+            figsAxs = model.plot_predictives_corner(plot_data=True, levels=levels, show_box_in_marginals=False,
                                                     place_legend=True, validate=False)
             for figAx in figsAxs:
                 pdf.savefig(figAx[0])
 
         # plot multi-universe average of the posterior predictive (corner plot)
+        use_level = 0.95
         names = ["predictive rho0", "predictive E/A"]
         labels = ['Sat. Density $n_0$ [fm$^{-3}$]', 'Sat. Energy $E_0/A$ [MeV]']
         fig, axs = plt.subplots(2, 2, figsize=(2*6.8*cm, 2*6.8*cm))
@@ -107,22 +108,23 @@ class SaturationAnalysis:
         data = az.from_dict(posterior={lbl: samples[lbl] for lbl in names})
         corner.corner(data,  # var_names=names,
                       labels=labels,
-                      quantiles=quantiles,
+                      quantiles=(0.5-use_level/2, 0.5+use_level/2),
                       verbose=debug,
-                      # title_quantiles=(0.025, 0.5, 0.975),
+                      # title_quantiles=None,  # bug in current version of `corner`
                       levels=levels,
-                      bins=40,
+                      facecolor=None,
+                      bins=bins,
+                      # color='r',
                       plot_datapoints=False, plot_density=False,
                       title_fmt=".3f", title_kwargs={"fontsize": 8}, fig=fig)
 
-        # fix corner's bug, see https://github.com/dfm/corner.py/issues/107
-        use_level = 0.95
+        # fix bug in `corner`, see https://github.com/dfm/corner.py/issues/107
         title_template = r"${{{1}}} \pm {{{2}}}$ {{{3}}} ({{{4:.0f}}}\%)"
         for iname, name in enumerate(names):
             mu = np.mean(samples[name])
-            disp = mu - np.percentile(samples[name], (1-use_level)/2*100)
+            disp = mu - np.percentile(samples[name], (1-use_level)/2*100)  # t distribution is symmetric about the mean
             if debug:
-                print("expected means and both-sided errors", mu, disp, mu-disp, mu+disp)
+                print("expected means and two-sided errors", mu, disp, mu-disp, mu+disp)
 
             if iname == 0:
                 quantity = "n_0"
@@ -140,22 +142,35 @@ class SaturationAnalysis:
         self.drischler_satbox.plot(ax=axs[1, 0], plot_scatter=False, plot_box_estimate=True,
                                    place_legend=False, add_axis_labels=False)
         # self.eft_predictions.plot(ax=axs[1, 0])
-        # self.plot_contraints()
+        # self.plot_constraints()
 
         for row in axs[:, 0]:
             row.set_xlim(0.145, 0.175)
 
-        axs[1, 0].set_ylim(-16.5, -14.7)
+        axs[1, 0].set_ylim(-16.5, -14.7)  # not that the axes are different
         axs[1, 1].set_xlim(-16.5, -14.7)
 
         pdf.savefig(fig)
         pdf.close()
 
         from plot_helpers import fit_bivariate_t
-        tt = fit_bivariate_t(samples[names].to_numpy(), alpha_fit=0.3, nu_limits=(3, 40),
-                             tol=1e-3, print_status=False)
-        print(tt)
-        print(model.posterior_params)
+        fit_res = fit_bivariate_t(samples[names].to_numpy(), alpha_fit=0.68, nu_limits=(3, 40),
+                                  tol=1e-3, print_status=debug)
+        if debug:
+            print(fit_res)
+            cov_est = np.cov(samples[names[0]], samples[names[1]])
+            print("est cov matrix:", cov_est)
+
+            # expected values
+            if num_realizations==1:
+                print("expected values")
+                df, mu, shape_matrix = model.predictives_params("posterior")
+                print("exp df:", df)
+                print("exp mean:", mu)
+                print("exp cov matrix:", shape_matrix * df / (df-2))
+
+        return fit_res
+
 
 def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
     prior_params_list = np.atleast_1d(prior_params_list)
