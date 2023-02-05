@@ -232,6 +232,14 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
 
     alpha = np.sort(np.atleast_1d(alpha), False)[::-1]
 
+    # handle limit nu-->inf: normal distribution
+    if np.isinf(nu):
+        nu = 99999  # might be a bit crude (than version commented out) but keeps this function self-contained
+        # n_std = np.sqrt(-np.log(1.-alpha)*2)
+        # for val in n_std:
+        #     confidence_ellipse_mean_cov(mean=mu, cov=Sigma, ax=ax, n_std=val, **kwargs)
+        # return
+
     # pick current axis if none is specified
     if ax is None:
         ax = plt.gca()
