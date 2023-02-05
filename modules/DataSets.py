@@ -96,7 +96,7 @@ class GenericDataSet(DataSet):
         if isinstance(num_points, int):
             ret = self.get_data_frame(exclude=exclude).sample(num_points, replace=replace)
         elif num_points not in (None, "all"):
-            raise ValueError(f"'num_points has to be int or 'None', got '{num_points}'")
+            raise ValueError(f"'num_points has to be int, 'None', or 'all', got '{num_points}'")
         if df is not None:
             ret = pd.concat((df, ret))
         return ret
@@ -402,7 +402,8 @@ class DataSetSampleConfig:
     sample_from_model_kwargs: dict = field(default_factory=lambda: dict(num_samples=1000,
                                                                         kind="predictive_y",
                                                                         based_on="posterior",
-                                                                        validate=False))
+                                                                        validate=False)
+                                           )
 
 
 @dataclass
