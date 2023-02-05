@@ -395,7 +395,7 @@ class DataSetSampleConfig:
     data_set: DataSet
     sample_from_model: bool = False
     sample_kwargs: dict = field(default_factory=lambda: dict(exclude=None,
-                                                             num_points=None,
+                                                             num_points=1,
                                                              num_pts_per_distr=1,
                                                              num_distr="all")
                                 )
