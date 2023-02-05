@@ -57,7 +57,7 @@ class SaturationAnalysis:
         pdf.close()
         # return fig, ax
 
-    def plot_individual_models(self, num_points=3000, dft_constraints=None):
+    def plot_individual_models(self, num_points=3000, dft_constraints=None, prior_params=None):
         dft_constraints = DEFAULT_DFT_CONSTRAINTS if dft_constraints is None else dft_constraints
         for lbl, val in tqdm(dft_constraints.items(), desc="Iterating over DFT constraints"):
             sample_kwargs = dict(exclude=None,
@@ -66,7 +66,8 @@ class SaturationAnalysis:
 
             scenario = Scenario(label=f"{lbl}-only",
                                 configs=[DataSetSampleConfig(data_set=val, sample_kwargs=sample_kwargs)])
-            self.multiverse(scenario=scenario, num_realizations=1, quantities=None, prior_params=None)
+            self.multiverse(scenario=scenario, num_realizations=1, plot_fitted_conf_regions=True,
+                            quantities=None, prior_params=prior_params)
 
     def multiverse(self, scenario=None, num_realizations=10, levels=None, quantities=None,
                    prior_params=None, progressbar=True, debug=False, bins=100,
@@ -161,7 +162,7 @@ class SaturationAnalysis:
 
         # fit bivariate t distribution to samples; only accurate for large numbers of sampling points
         from plot_helpers import fit_bivariate_t
-        fit = fit_bivariate_t(samples[names].to_numpy(), alpha_fit=0.68, nu_limits=(3, 40),
+        fit = fit_bivariate_t(samples[names].to_numpy(), alpha_fit=0.68, nu_limits=(3, 60),
                                   tol=1e-3, print_status=debug)
         if debug:
             print("fit results", fit)

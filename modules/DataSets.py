@@ -394,9 +394,15 @@ class KernelDensityEstimate(DataSet):
 class DataSetSampleConfig:
     data_set: DataSet
     sample_from_model: bool = False
-    sample_kwargs: dict = field(default_factory=lambda: dict(exclude=None, num_points=None, num_pts_per_distr=1, num_distr="all"))
-    sample_from_model_kwargs: dict = field(default_factory=lambda: dict(num_samples=1000, kind="predictive_y",
-                                                                        based_on="posterior", validate=False))
+    sample_kwargs: dict = field(default_factory=lambda: dict(exclude=None,
+                                                             num_points=None,
+                                                             num_pts_per_distr=1,
+                                                             num_distr="all")
+                                )
+    sample_from_model_kwargs: dict = field(default_factory=lambda: dict(num_samples=1000,
+                                                                        kind="predictive_y",
+                                                                        based_on="posterior",
+                                                                        validate=False))
 
 
 @dataclass
