@@ -385,7 +385,7 @@ def test_plot_confregion_univariate_t():
 
 def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status=False):
     if nu_limits is None:
-        nu_limits = (3, 8)
+        nu_limits = (3, 40)
 
     # estimate mean value (simple!)
     mu_est = data.mean(axis=0)
@@ -405,7 +405,8 @@ def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status
         nu_est = optimize.bisect(metric, nu_limits[0], nu_limits[1], args=(alpha_fit,), xtol=tol)
         Psi_est = cov_est * (nu_est-2) / nu_est
     except ValueError as e:
-        print(f"Error while fitting bivariate t distribution with finite dof: '{str(e)}'; assuming Normal distribution")
+        print(f"fit of a bivariate t distribution with finite dof in ({nu_limits}) failed: '{str(e)}'")
+        print("assuming Normal distribution instead")
         nu_est = np.inf
         Psi_est = cov_est
     return {"mu": mu_est, "Psi": Psi_est, "df": np.rint(nu_est)}
