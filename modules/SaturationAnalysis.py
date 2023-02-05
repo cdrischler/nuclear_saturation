@@ -70,16 +70,15 @@ class SaturationAnalysis:
 
     def multiverse(self, scenario=None, num_realizations=10, levels=None, quantities=None,
                    prior_params=None, progressbar=True, debug=False, bins=100,
-                   plot_fitted_conf_regions=False,
+                   plot_fitted_conf_regions=True,
                    num_samples=1, num_samples_mu_Sigma=10000000, **kwargs):
         if levels is None:
             levels = np.array((0.5, 0.8, 0.95, 0.99))
         levels = np.atleast_1d(levels)
 
-        quantiles = (1-levels)/2
-        quantiles = np.concatenate((quantiles, [0.5], 1-quantiles))
-
-        pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.pdf_output_path}/{scenario.label}.pdf")
+        close_figures = num_realizations > 3  # to save memory if many `num_realizations` are requested
+        file_output = f"{self.pdf_output_path}/{scenario.label_plain}.pdf"
+        pdf = matplotlib.backends.backend_pdf.PdfPages(file_output)
         samples = pd.DataFrame()
         for irealiz in tqdm(range(num_realizations), desc="MC sampling", disable=not progressbar):
             # set up canvas (and draw saturation box)
@@ -97,11 +96,15 @@ class SaturationAnalysis:
                                              set_xy_limits=True, set_xy_lbls=True, place_legend=True,
                                              validate=False)
             pdf.savefig(fig)
+            if close_figures:
+                plt.close(fig=fig)
 
             figsAxs = model.plot_predictives_corner(plot_data=True, levels=levels, show_box_in_marginals=False,
                                                     place_legend=True, validate=False)
             for figAx in figsAxs:
                 pdf.savefig(figAx[0])
+                if close_figures:
+                    plt.close(fig=figAx[0])
 
         # plot multi-universe average of the posterior predictive (corner plot)
         use_level = 0.95
@@ -178,10 +181,13 @@ class SaturationAnalysis:
             plot_confregion_bivariate_t(fit["mu"], fit["Psi"], fit["df"],
                                         ax=axs[1, 0], alpha=levels, alpha_unit="decimal", num_pts=10000000,
                                         plot_scatter=False, validate=False, zorder=100)  # linestyle=":"
+            axs[1, 0].legend(ncol=2, title="confidence level (fit)", prop={'size': 8}, frameon=False)
 
-        axs[1, 0].legend(ncol=2, title="confidence level (fit)", prop={'size': 8}, frameon=False)
         pdf.savefig(fig)
         pdf.close()
+        if close_figures:
+            plt.close(fig=fig)
+        print(f"Results written to '{file_output}'")
         return fit
 
 

@@ -403,4 +403,8 @@ class DataSetSampleConfig:
 class Scenario:
     label: str
     configs: list
+
+    @property
+    def label_plain(self):
+        return self.label.replace(" ", "-").lower()
 #%%
