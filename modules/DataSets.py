@@ -168,20 +168,29 @@ class NormDistDataSet(DataSet):
         if use_filenames == use_specifier:
             raise ValueError("Need to specify either `filenames` or `set_specifier`")
 
+        data = []; labels = []
         if use_filenames:
             files = filenames
         else:
             if set_specifier == "fsu_rmf":
                 files = sorted(glob.glob("data/Piekarewicz/*/CovEllipse.com"))
+            elif set_specifier in ("sv-min", "tov"):
+                files = ["data/Reinhard/CovEllipse.dat"]
             else:
                 raise ValueError(f"unknown `set_specifier` '{set_specifier}'")
 
-        data = []; labels = []
-        for file in files:
-            labels.append(re.search(r"(\w+)/Cov", file).group(1))
-            data.append(open(file, 'r').readlines()[3].strip().split(","))
-        data = pd.DataFrame(data, columns=("mean rho0", "mean E/A", "sigma rho0", "sigma E/A", "rho"), dtype=np.float64)
-        data["label"] = labels
+        if set_specifier == "fsu_rmf":
+            for file in files:
+                labels.append(re.search(r"(\w+)/Cov", file).group(1))
+                data.append(open(file, 'r').readlines()[3].strip().split(","))
+            data = pd.DataFrame(data, columns=("mean rho0", "mean E/A", "sigma rho0", "sigma E/A", "rho"), dtype=np.float64)
+            data["label"] = labels
+        else:
+            data = pd.read_csv(files[0])
+            label = {"sv-min": "SV-min", "tov": "TOV"}[set_specifier]
+            data = data.loc[data['label'] == label]
+            data["label"] = label
+
         data["class"] = set_specifier
         data["file"] = files
         return files, data
@@ -228,9 +237,13 @@ class NormDistDataSet(DataSet):
         for irow, row in self.get_data_frame(exclude=exclude).iterrows():
             mean, cov = NormDistDataSet.from_row_to_mean_cov(row)
             n_std = np.sqrt(-np.log(1.-level)*2)
+            if row["class"] in ("sv-min", "tov"):
+                use_color_palette = flatui[-2::-1]
+            else:
+                use_color_palette = colorset
             confidence_ellipse_mean_cov(mean=mean, cov=cov,
                                         ax=ax, n_std=n_std,
-                                        facecolor=colorset[irow],
+                                        facecolor=use_color_palette[irow],
                                         label=f'{row["label"]} ({level*100:.0f}\%)')
 
         if add_axis_labels:

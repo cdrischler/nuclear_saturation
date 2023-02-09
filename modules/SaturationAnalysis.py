@@ -21,6 +21,8 @@ DEFAULT_DFT_CONSTRAINTS = {
     "Brown": GenericDataSet(filenames=["brown/satpoints_brown.csv"]),
     "Dutra_rmf": GenericDataSet(filenames=["satpoints_dutra_rmf.csv"]),
     "FSU": NormDistDataSet(set_specifier="fsu_rmf"),
+    "SV-min": NormDistDataSet(set_specifier="sv-min"),
+    "TOV": NormDistDataSet(set_specifier="tov"),
     "Schunck": KernelDensityEstimate(set_specifier="schunck"),
     "Giuliani": KernelDensityEstimate(set_specifier="giuliani")
 }
