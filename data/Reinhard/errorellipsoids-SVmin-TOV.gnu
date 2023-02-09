@@ -1,3 +1,6 @@
+# GNUplot file obtained from P.G. Reinhard
+# Reference for Sv-min: P. Kluepfel, P.-G. Reinhard, T. J. Buervenich, and J. A. Maruhn Phys. Rev. C 79, 034310 (2009), https://arxiv.org/abs/0804.3385
+# Reference for TOV: J. Erler, C.J. Horowitz, W. Nazarewicz, M. Rafalski, and P.G. Reinhard, Phys. Rev. C 87 (2013) 044320, https://arxiv.org/abs/1211.6292
 set term post eps enhanced color "TimesNewRoman,30"
 set colorsequence classic
 set output "errorellipsoids-SVmin-TOV.eps"
