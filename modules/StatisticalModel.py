@@ -342,11 +342,10 @@ class StatisticalModel:
             box_params = drischler_satbox.box_estimate()
 
             # diagonal panels
-            R = np.linalg.cholesky(shape_matrix)
             from scipy.stats import t
             from plot_helpers import plot_confregion_univariate_t
             for idiag, diag in enumerate(np.diag(axs)):
-                sigma = np.linalg.norm(R[idiag, :])
+                sigma = np.sqrt(shape_matrix[idiag, idiag])  # marginalization
                 if idiag == 0:
                     x = np.linspace(0.12, 0.20, 1000)
                     y = t.pdf(x, df, loc=mu[idiag], scale=sigma) * sigma
