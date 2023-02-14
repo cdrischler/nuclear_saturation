@@ -239,11 +239,16 @@ class NormDistDataSet(DataSet):
             n_std = np.sqrt(-np.log(1.-level)*2)
             if row["class"] in ("sv-min", "tov"):
                 use_color_palette = flatui[-2::-1]
+                facecolor = "none"
+                edgecolor = use_color_palette[irow]
             else:
                 use_color_palette = colorset
+                facecolor = use_color_palette[irow]
+                edgecolor = facecolor
             confidence_ellipse_mean_cov(mean=mean, cov=cov,
                                         ax=ax, n_std=n_std,
-                                        facecolor=use_color_palette[irow],
+                                        facecolor=facecolor,
+                                        edgecolor=edgecolor,
                                         label=f'{row["label"]} ({level*100:.0f}\%)')
 
         if add_axis_labels:
@@ -386,7 +391,8 @@ class KernelDensityEstimate(DataSet):
                               contour_kwargs=None, contourf_kwargs=None, data_kwargs=None,
                               pcolor_kwargs=None, new_fig=False)
 
-                patch = mpatches.Patch(color=color, label=label.replace(" $\it{et~al.}$", "+"))
+                patch = mpatches.Patch(edgecolor=color, facecolor="none",
+                                       label=label.replace(" $\it{et~al.}$", "+"))
                 additional_legend_handles.append(patch)
 
             #if plot_scatter:
