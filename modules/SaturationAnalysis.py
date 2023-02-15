@@ -130,6 +130,9 @@ class SaturationAnalysis:
                       no_fill_contours=True, fill_contours=None,
                       title_fmt=".3f", title_kwargs={"fontsize": 8}, fig=fig)
 
+        axs[0, 1].text(0.05, 0.9, f"posterior predictive", transform=axs[0, 1].transAxes)  #transAxes)
+        axs[0, 1].text(0.05, 0.82, f"({prior_params['label']})", transform=axs[0, 1].transAxes)  # transAxes)
+
         # fix bug in `corner`, see https://github.com/dfm/corner.py/issues/107
         title_template = r"${{{1}}} \pm {{{2}}}$ {{{3}}} ({{{4:.0f}}}\%)"
         for iname, name in enumerate(names):
