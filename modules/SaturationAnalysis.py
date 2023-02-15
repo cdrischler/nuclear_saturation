@@ -80,7 +80,8 @@ class SaturationAnalysis:
         levels = np.atleast_1d(levels)
 
         close_figures = num_realizations > 3  # to save memory if many `num_realizations` are requested
-        file_output = f"{self.pdf_output_path}/{scenario.label_plain}-{num_samples_mu_Sigma}-{num_realizations}.pdf"
+        file_output = f"{self.pdf_output_path}/{scenario.label_plain}-{prior_params['label'].lower()}-"
+        file_output += f"{num_samples_mu_Sigma}-{num_realizations}.pdf"
         pdf = matplotlib.backends.backend_pdf.PdfPages(file_output)
         samples = pd.DataFrame()
         for irealiz in tqdm(range(num_realizations), desc="MC sampling", disable=not progressbar):
