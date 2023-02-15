@@ -376,7 +376,7 @@ class KernelDensityEstimate(DataSet):
                     label = "Schunck $\it{et~al.}$ (\'20" + f", {level*100:.0f}\%)"
                 elif "giuliani" in cls.lower():
                     use_colorset = sorted(flatui)
-                    label = "Giuliani $\it{et~al.}$ (\'21" + f", {level*100:.0f}\%)"
+                    label = "Giuliani $\it{et~al.}$ (\'22" + f", {level*100:.0f}\%)"
                 else:
                     use_colorset = sorted(colorset)
                     label = cls
