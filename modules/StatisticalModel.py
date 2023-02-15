@@ -323,8 +323,8 @@ class StatisticalModel:
             axs[0, 1].grid(False)
             axs[0, 1].axis('off')
             axs[0, 1].text(0.05, 0.9, f"{bon} predictive", transform=axs[0, 1].transAxes)  #transAxes)
-            axs[0, 1].text(0.05, 0.83, f"({self.prior_params['label'].lower()})", transform=axs[0, 1].transAxes)  # transAxes)
-            #fig.tight_layout(pad=.5)
+            axs[0, 1].text(0.05, 0.82, f"({self.prior_params['label']})", transform=axs[0, 1].transAxes)  # transAxes)
+            # fig.tight_layout(pad=.5)
 
             # lower left panel
             df, mu, shape_matrix = self.predictives_params(bon)
