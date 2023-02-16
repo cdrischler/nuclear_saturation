@@ -230,7 +230,7 @@ class StatisticalModel:
             print("passed:", stat)
         return stat
 
-    def predictives_params(self, based_on="posterior"):
+    def predictives_params(self, based_on="posterior", return_dict=False):
         """
         returns the parameters of the posterior predictive and prior predictive
         :param based_on: either "posterior" or "prior"
@@ -241,7 +241,10 @@ class StatisticalModel:
         # Eq. (258) in Murphy's notes: https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf
         df = params["nu"] - self.d + 1
         shape_matrix = params["Psi"]*(params["kappa"]+1)/(params["kappa"]*df)
-        return df, params["mu"], shape_matrix
+        if return_dict:
+            return {"nu": df, "mu": params["mu"], "Psi": shape_matrix}
+        else:
+            return df, params["mu"], shape_matrix
 
     def plot_predictives(self, plot_data=True, levels=None, num_pts=10000000,
                          set_xy_limits=True, set_xy_lbls=True, place_legend=True, validate=False):
