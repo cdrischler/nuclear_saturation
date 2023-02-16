@@ -49,8 +49,17 @@ cmaps = [plt.get_cmap(name) for name in color_list]
 colors_alt = [cmap(0.55 - 0.1 * (i == 0)) for i, cmap in enumerate(cmaps)]
 colors_alt2 = plt.get_cmap('tab20').colors
 
+latex_markers = ["$\medblackstar$",
+                 "$\medblackdiamond$",
+                 "$\medblacksquare$",
+                 "$\medblackcircle$",
+                 "$\medblacktriangledown$",
+                 "$\medblacktriangleleft$",
+                 "$\medblacktriangleright$",
+                 "$\medblacktriangleup$"]
 
-def highlight_saturation_density(ax, n0 = 0.164, n0_std = 0.007, zorder=-1, alpha=0.5, color='0.6'):
+
+def highlight_saturation_density(ax, n0=0.164, n0_std=0.007, zorder=-1, alpha=0.5, color='0.6'):
     ax.axvspan(n0-n0_std, n0+n0_std, zorder=zorder, alpha=alpha, color=color)
 
 
