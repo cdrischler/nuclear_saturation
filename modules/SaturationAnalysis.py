@@ -114,7 +114,7 @@ class SaturationAnalysis:
         use_level = 0.95
         names = ["predictive rho0", "predictive E/A"]
         labels = ['Sat. Density $n_0$ [fm$^{-3}$]', 'Sat. Energy $E_0/A$ [MeV]']
-        fig, axs = plt.subplots(2, 2, figsize=(2*6.8*cm, 2*6.8*cm))
+        fig, axs = plt.subplots(2, 2, figsize=(9*cm, 1.2*8.6*cm))
 
         data = az.from_dict(posterior={lbl: samples[lbl] for lbl in names})
         corner.corner(data,  # var_names=names,
@@ -126,6 +126,7 @@ class SaturationAnalysis:
                       facecolor="none",
                       bins=bins,
                       # color='r',
+                      labelpad=-0.0,
                       plot_datapoints=False, plot_density=False,
                       no_fill_contours=True, fill_contours=None,
                       title_fmt=".3f", title_kwargs={"fontsize": 8}, fig=fig)
@@ -152,7 +153,7 @@ class SaturationAnalysis:
 
             fmt = "{{0:{0}}}".format(title_fmt).format
             title = title_template.format(quantity, fmt(mu), fmt(disp), unit, use_level*100)
-            axs[iname, iname].set_title(title)
+            axs[iname, iname].set_title(title, fontsize=7)
 
         self.drischler_satbox.plot(ax=axs[1, 0], plot_scatter=False, plot_box_estimate=True,
                                    place_legend=False, add_axis_labels=False)  # , zorder=60, facecolor="none")
@@ -188,7 +189,7 @@ class SaturationAnalysis:
             plot_confregion_bivariate_t(fit["mu"], fit["Psi"], fit["df"],
                                         ax=axs[1, 0], alpha=levels, alpha_unit="decimal", num_pts=10000000,
                                         plot_scatter=False, validate=False, zorder=100)  # linestyle=":"
-            axs[1, 0].legend(ncol=2, title="confidence level (fit)", prop={'size': 8}, frameon=False)
+            axs[1, 0].legend(ncol=2, title="confidence level (fit)", prop={'size': 6}, frameon=False)
 
         pdf.savefig(fig)
         pdf.close()
