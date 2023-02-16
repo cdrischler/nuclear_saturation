@@ -164,7 +164,7 @@ def plot_UG_constraint(ax, plot_analytic=False):
 
     idx_arrow_tews = 60
     ax.arrow(Esym_tews[idx_arrow_tews], L_tews[idx_arrow_tews], 1, 0, head_length=0.3,
-             head_width=2, zorder=tews_zorder)
+             head_width=2, zorder=tews_zorder, facecolor="k")
     ax.text(Esym_tews[idx_arrow_tews]+0.15, L_tews[idx_arrow_tews]+1.4,
             'UG', ha='left', va='bottom', zorder=tews_zorder, fontsize=annotate_fs)
 
@@ -177,7 +177,7 @@ def plot_UG_constraint(ax, plot_analytic=False):
         idx_arrow_tews_a = 10
         ax.arrow(
             Esym_tews_analytic[idx_arrow_tews_a], L_grid[idx_arrow_tews_a], 1, 0,
-            head_length=0.3, head_width=2, zorder=tews_zorder)
+            head_length=0.3, head_width=2, zorder=tews_zorder, facecolor="k")
         ax.text(Esym_tews_analytic[idx_arrow_tews_a]+0.15, L_grid[idx_arrow_tews_a]+1.4,
                 'UG Analytic', ha='left', va='bottom', zorder=tews_zorder, fontsize=annotate_fs)
 
