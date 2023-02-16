@@ -32,12 +32,12 @@ drischler_satbox = GenericDataSet(filenames=["satpoints_dutra_skyrme.csv", "satp
 
 
 class SaturationAnalysis:
-    def __init__(self, pdf_output_path="./pdf"):
+    def __init__(self, prestore_eft_fit=False, pdf_output_path="./pdf"):
         self.pdf_output_path = pdf_output_path
         if not os.path.exists(pdf_output_path):
             os.mkdir(pdf_output_path)
         self.drischler_satbox = drischler_satbox  # GenericDataSet(filenames=["satpoints_dutra_skyrme.csv", "satpoints_kortelainen.csv"])
-        self.eft_predictions = EftPredictions(show_result=True)
+        self.eft_predictions = EftPredictions(show_result=True) if prestore_eft_fit else None
 
     def plot_constraints(self, dft_constraints=None, eft=False, dft_conf_level=0.95,
                          eft_conf_level=0.95, eft_plot_scatter=True):
@@ -54,6 +54,8 @@ class SaturationAnalysis:
                 additional_legend_handles.append(handles)
             pdf.savefig(fig)
         if eft:
+            if self.eft_predictions is None:
+                self.eft_predictions = EftPredictions(show_result=True)
             self.eft_predictions.plot(ax=ax, level=eft_conf_level, plot_scatter=eft_plot_scatter)
             pdf.savefig(fig)
         pdf.close()
