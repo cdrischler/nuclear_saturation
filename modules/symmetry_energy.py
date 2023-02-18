@@ -39,13 +39,13 @@ avail_srcs.append({
 })
 
 # Huth, Wellenhofer et al.
-data_HWS = pd.read_csv("./data/Sv_L/HWS.csv", names=['Esym', 'L'], comment="#")
-avail_srcs.append({
-    "label" : "HWS", "facecolor" : green, 'Esym': data_HWS['Esym'], 'L': data_HWS['L'],
-    'label_x': 0.48, 'label_y': 0.48, 'ha': 'left', 'va': 'bottom', 'label_color': 'k',
-    'use_spline': False, 'fontsize':annotate_fs, "alpha":0.6
-    #'reference': 'Gandolfi \\textit{et al.},\nPRC \\textbf{85}, 032801 (2012)'
-})
+# data_HWS = pd.read_csv("./data/Sv_L/HWS.csv", names=['Esym', 'L'], comment="#")
+# avail_srcs.append({
+#     "label" : "HWS", "facecolor" : green, 'Esym': data_HWS['Esym'], 'L': data_HWS['L'],
+#     'label_x': 0.48, 'label_y': 0.48, 'ha': 'left', 'va': 'bottom', 'label_color': 'k',
+#     'use_spline': False, 'fontsize':annotate_fs, "alpha":0.6
+#     #'reference': 'Gandolfi \\textit{et al.},\nPRC \\textbf{85}, 032801 (2012)'
+# })
 
 
 # Unitary gas limit
