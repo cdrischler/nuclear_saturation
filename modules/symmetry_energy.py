@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from matplotlib.ticker import AutoMinorLocator
-from modules.plot_helpers import purple, grey, flatui, colorset
+from modules.plot_helpers import purple, grey, flatui, colorset, darkblue, green, blue
 from modules.plot_helpers import lighten_color, colors_alt, confidence_ellipse_mean_cov
 
 
@@ -27,6 +27,24 @@ avail_srcs.append({
     'use_spline': False, 'fontsize':annotate_fs,
     #     'reference': 'G: Gandolfi, S., Carlson, J.,  Reddy, S., PRC, 85, 032801'
     'reference': 'Gandolfi \\textit{et al.},\nPRC \\textbf{85}, 032801 (2012)'
+})
+
+# Tews, Krueger et al.
+data_TK = pd.read_csv("./data/Sv_L/TK.csv", names=['Esym', 'L'], comment="#")
+avail_srcs.append({
+    "label" : "TK", "facecolor" : blue, 'Esym': data_TK['Esym'], 'L': data_TK['L'],
+    'label_x': 0.36, 'label_y': 0.46, 'ha': 'left', 'va': 'bottom', 'label_color': 'k',
+    'use_spline': False, 'fontsize':annotate_fs, "alpha":0.6
+    #'reference': 'Gandolfi \\textit{et al.},\nPRC \\textbf{85}, 032801 (2012)'
+})
+
+# Huth, Wellenhofer et al.
+data_HWS = pd.read_csv("./data/Sv_L/HWS.csv", names=['Esym', 'L'], comment="#")
+avail_srcs.append({
+    "label" : "HWS", "facecolor" : green, 'Esym': data_HWS['Esym'], 'L': data_HWS['L'],
+    'label_x': 0.48, 'label_y': 0.48, 'ha': 'left', 'va': 'bottom', 'label_color': 'k',
+    'use_spline': False, 'fontsize':annotate_fs, "alpha":0.6
+    #'reference': 'Gandolfi \\textit{et al.},\nPRC \\textbf{85}, 032801 (2012)'
 })
 
 
@@ -72,13 +90,13 @@ def plot_source(
             bbox = dict(facecolor='w', boxstyle='round', alpha=1)
         ax.text(
             label_x, label_y, label, fontdict=dict(color=label_color),
-            rotation=rotation, transform=ax.transAxes, bbox=bbox,
+            rotation=rotation, transform=ax.transAxes, bbox=bbox, zorder=100,
             fontsize=fontsize, ha=("left" if ha==None else ha), va=("bottom" if va==None else va)
         )
     return ax
 
 
-def plot_holt_kaiser(ax, color='w', alpha=1, lw=1.1):
+def plot_holt_kaiser(ax, color='w', alpha=1, lw=1.1, zorder=10):
     #  Holt/Kaiser PRC 2017
     alf1=1.41508   ## correlation angle
     alf2=1.43502   ## correlation angle
@@ -113,7 +131,7 @@ def plot_holt_kaiser(ax, color='w', alpha=1, lw=1.1):
         yp1[i] = x*np.sin(alf1) + y*np.cos(alf1) + y1
 
     #ax.fill(xp1, yp1, facecolor=color, edgecolor='k', lw=lw, alpha=alpha)
-    ax.plot(xp1, yp1, ls="-", lw=lw, color=color, alpha=alpha)
+    ax.plot(xp1, yp1, ls="-", lw=lw, color=color, alpha=alpha, zorder=zorder)
 
     i = 0
     bbox_dict = dict(boxstyle="round,pad=0.5", fc=color, alpha=alpha, ec="none", lw=lw)
@@ -201,7 +219,7 @@ def make_sv_l_plot(ax):
     # external sources
     i = 1
     for src in avail_srcs:
-        plot_source(ax, zorder=i/10., **src)
+        plot_source(ax, zorder=i, **src)
         i += 1
 
     # UG constraints
