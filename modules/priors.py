@@ -7,17 +7,21 @@ standard_prior_params = {"mu": np.array([0.16, -15.9]),
                                           [standard_prior_off_diag, 0.32**2]]),
                          "kappa": 1, "nu": 10, "label": "Standard Prior"}
 
-setA_prior_params = {"mu": np.array([0.16, -15.9]),
-                     "Psi": 2*np.array([[0.0025**2, standard_prior_off_diag],
-                                        [standard_prior_off_diag, 0.2**2]]),
-                     "kappa": 1, "nu": 4, "label": "Set A"}
-
-setB_prior_params = {"mu": np.array([0.16, -15.9]),
+setA_prior_params = {"mu": np.array([0.160, -16.0]),
                      "Psi": 0.6*np.array([[0.004**2, standard_prior_off_diag],
                                           [standard_prior_off_diag, 0.2**2]]),
+                     "kappa": 1, "nu": 4, "label": "Set A"}
+
+setB_prior_params = {"mu": np.array([0.163, -15.9]),
+                     "Psi": 2*np.array([[0.0025**2, standard_prior_off_diag],
+                                        [standard_prior_off_diag, 0.2**2]]),
                      "kappa": 1, "nu": 4, "label": "Set B"}
 
 used_prior_sets = [setA_prior_params, setB_prior_params, standard_prior_params]
+
+
+def label_filename(label):
+    return label.lower().replace(" ", "_")
 
 # Note (taken from https://en.wikipedia.org/wiki/Conjugate_prior)
 
