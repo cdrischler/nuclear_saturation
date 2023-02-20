@@ -256,7 +256,7 @@ def make_sv_l_plot(ax):
     # plot PREX-informed result
     mean = np.array([38.1, 106])
     cov = np.diag([4.7, 37])**2
-    for n_std in (3, 2):
+    for n_std in (3, 2, 1):
         confidence_ellipse_mean_cov(
             mean, cov, ax=ax, n_std=n_std,
             facecolor=lighten_color("k", 1/n_std), edgecolor='k', alpha=0.66, zorder=0

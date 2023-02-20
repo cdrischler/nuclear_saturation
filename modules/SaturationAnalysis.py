@@ -13,6 +13,7 @@ from modules.StatisticalModel import StatisticalModel, multivariate_t, multivari
 import matplotlib.backends.backend_pdf
 from modules.DataSets import DataSetSampleConfig, Scenario
 from modules.StatisticalModel import model_from_scenario
+from modules.priors import label_filename
 
 
 DEFAULT_DFT_CONSTRAINTS = {
@@ -82,8 +83,8 @@ class SaturationAnalysis:
         levels = np.atleast_1d(levels)
 
         close_figures = num_realizations > 3  # to save memory if many `num_realizations` are requested
-        file_output = f"{self.pdf_output_path}/{scenario.label_plain}-{prior_params['label'].lower()}-"
-        file_output += f"{num_samples_mu_Sigma}-{num_realizations}.pdf"
+        file_output = f"{self.pdf_output_path}/{scenario.label_plain}_{label_filename(prior_params['label'])}_"
+        file_output += f"{num_samples_mu_Sigma}_{num_realizations}.pdf"
         pdf = matplotlib.backends.backend_pdf.PdfPages(file_output)
         samples = pd.DataFrame()
         for irealiz in tqdm(range(num_realizations), desc="MC sampling", disable=not progressbar):
