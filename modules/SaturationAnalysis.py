@@ -76,7 +76,7 @@ class SaturationAnalysis:
 
     def multiverse(self, scenario=None, num_realizations=10, levels=None, quantities=None,
                    prior_params=None, progressbar=True, debug=False, bins=100,
-                   plot_fitted_conf_regions=True,
+                   plot_fitted_conf_regions=True, plot_iter_results=False,
                    num_samples=1, num_samples_mu_Sigma=10000000, **kwargs):
         if levels is None:
             levels = np.array((0.5, 0.8, 0.95, 0.99))
@@ -99,19 +99,20 @@ class SaturationAnalysis:
             samples = pd.concat((samples, tmp))
 
             # plot predictive prior and predictive posterior (right panel)
-            fig, axs = model.plot_predictives(plot_data=True, levels=levels, num_pts=10000000,
-                                             set_xy_limits=True, set_xy_lbls=True, place_legend=True,
-                                             validate=False)
-            pdf.savefig(fig)
-            if close_figures:
-                plt.close(fig=fig)
-
-            figsAxs = model.plot_predictives_corner(plot_data=True, levels=levels, show_box_in_marginals=False,
-                                                    place_legend=True, validate=False)
-            for figAx in figsAxs:
-                pdf.savefig(figAx[0])
+            if plot_iter_results:
+                fig, axs = model.plot_predictives(plot_data=True, levels=levels, num_pts=10000000,
+                                                 set_xy_limits=True, set_xy_lbls=True, place_legend=True,
+                                                 validate=False)
+                pdf.savefig(fig)
                 if close_figures:
-                    plt.close(fig=figAx[0])
+                    plt.close(fig=fig)
+
+                figsAxs = model.plot_predictives_corner(plot_data=True, levels=levels, show_box_in_marginals=False,
+                                                        place_legend=True, validate=False)
+                for figAx in figsAxs:
+                    pdf.savefig(figAx[0])
+                    if close_figures:
+                        plt.close(fig=figAx[0])
 
         # plot multi-universe average of the posterior predictive (corner plot)
         use_level = 0.95
