@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from scipy.stats import invwishart, multivariate_normal, multivariate_t
+from scipy.stats import invwishart, wishart, multivariate_normal, multivariate_t
 import matplotlib.pyplot as plt
 from modules.plot_helpers import colors
 from modules.plot_helpers import plot_confregion_bivariate_t
@@ -113,7 +113,11 @@ class StatisticalModel:
         if based_on not in ("posterior", "prior"):
             raise ValueError(f"Got unknown prior/posterior request '{based_on}'.")
         params = self.posterior_params if based_on=="posterior" else self.prior_params
-        Sigmas = invwishart.rvs(df=params["nu"], scale=params["Psi"], size=num_samples, random_state=random_state)
+
+        # sampling from numpy's invwish() is much (!) slower than sampling from numpy's wishart()
+        # and then inverting the result, so for runtime improvement, let's not use invwishart()
+        # Sigmas = invwishart.rvs(df=params["nu"], scale=params["Psi"], size=num_samples, random_state=random_state)
+        Sigmas = np.linalg.inv(wishart.rvs(df=params["nu"], scale=np.linalg.inv(params["Psi"]), size=num_samples, random_state=random_state))
 
         if num_samples == 1:
             Sigmas = np.expand_dims(Sigmas, 0)
