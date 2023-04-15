@@ -114,10 +114,15 @@ class StatisticalModel:
             raise ValueError(f"Got unknown prior/posterior request '{based_on}'.")
         params = self.posterior_params if based_on=="posterior" else self.prior_params
 
-        # sampling from numpy's invwish() is much (!) slower than sampling from numpy's wishart()
+        # sampling from numpy's invwishart() is slower than sampling from numpy's wishart()
         # and then inverting the result, so for runtime improvement, let's not use invwishart()
-        # Sigmas = invwishart.rvs(df=params["nu"], scale=params["Psi"], size=num_samples, random_state=random_state)
-        Sigmas = np.linalg.inv(wishart.rvs(df=params["nu"], scale=np.linalg.inv(params["Psi"]), size=num_samples, random_state=random_state))
+        # unless the number of sampling points requested is "small"
+        if num_samples < 1000:  # arbitrary threshold
+            Sigmas = invwishart.rvs(df=params["nu"], scale=params["Psi"], size=num_samples, random_state=random_state)
+        else:
+            Sigmas = np.linalg.inv(wishart.rvs(df=params["nu"], scale=np.linalg.inv(params["Psi"]), size=num_samples, random_state=random_state))
+        # https://www.math.wustl.edu/~sawyer/hmhandouts/Wishart.pdf (mentions are fast method to sample wishart(); see Odell et al. in that pdf
+        # https://en.wikipedia.org/wiki/Wishart_distribution#Definition
 
         if num_samples == 1:
             Sigmas = np.expand_dims(Sigmas, 0)
