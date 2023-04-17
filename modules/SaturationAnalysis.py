@@ -2,7 +2,6 @@ from tqdm import tqdm
 from modules.plot_helpers import cm
 import matplotlib.pyplot as plt
 import pandas as pd
-from modules.StatisticalModel import model_from_scenario
 import corner
 import numpy as np
 import os
@@ -11,8 +10,7 @@ from modules.DataSets import GenericDataSet, NormDistDataSet, KernelDensityEstim
 from modules.EftPredictions import *
 from modules.StatisticalModel import StatisticalModel, multivariate_t, multivariate_normal, standard_prior_params
 import matplotlib.backends.backend_pdf
-from modules.DataSets import DataSetSampleConfig, Scenario
-from modules.StatisticalModel import model_from_scenario
+from modules.DataSets import Scenario
 from modules.priors import label_filename
 
 
@@ -69,50 +67,97 @@ class SaturationAnalysis:
                                  num_points="all" if isinstance(val, GenericDataSet) else num_points,
                                  num_distr="all")
 
-            scenario = Scenario(label=f"{lbl}-only",
-                                configs=[DataSetSampleConfig(data_set=val, sample_kwargs=sample_kwargs)])
+            scenario = Scenario(label=f"{lbl}-only", datasets=[val])
             self.multiverse(scenario=scenario, num_realizations=1, plot_fitted_conf_regions=True,
                             quantities=None, prior_params=prior_params)
 
-    def multiverse(self, scenario=None, num_realizations=10, levels=None, quantities=None,
+    def multiverse(self, scenario=None, num_realizations=10, num_pts_per_realization=1, sample_replace=True,
+                   levels=None, quantities=None, parallel_eval=True,
                    prior_params=None, progressbar=True, debug=False, bins=100,
-                   plot_fitted_conf_regions=True, plot_iter_results=False,
+                   plot_fitted_conf_regions=True, plot_iter_results=False, close_figures=True,
                    num_samples=1, num_samples_mu_Sigma=10000000, **kwargs):
         if levels is None:
             levels = np.array((0.5, 0.8, 0.95, 0.99))
         levels = np.atleast_1d(levels)
 
-        close_figures = num_realizations > 3  # to save memory if many `num_realizations` are requested
         file_output = f"{self.pdf_output_path}/{scenario.label_plain}_{label_filename(prior_params['label'])}_"
         file_output += f"{num_samples_mu_Sigma}_{num_realizations}.pdf"
         pdf = matplotlib.backends.backend_pdf.PdfPages(file_output)
-        samples = pd.DataFrame()
-        for irealiz in tqdm(range(num_realizations), desc="MC sampling", disable=not progressbar):
-            # set up canvas (and draw saturation box)
-            model = model_from_scenario(scenario, quantities=quantities, prior_params=prior_params)
 
-            # store data from current universe (for universe-averaging later on)
-            tmp = model.sample_predictive_bf(return_predictive_only=False, based_on="posterior",
-                                             num_samples=num_samples,
-                                             num_samples_mu_Sigma=num_samples_mu_Sigma)  # 100000
-            tmp["universe"] = irealiz
-            samples = pd.concat((samples, tmp))
+        num_points = num_realizations*num_pts_per_realization
+        use_kwargs = dict(df=None, replace=sample_replace,
+                          exclude=None, num_points=num_points,
+                          num_pts_per_distr=1, num_distr="all")
+        sampled_dft_constraints = [dset.sample(**use_kwargs) for dset in scenario.datasets]
 
-            # plot predictive prior and predictive posterior (right panel)
-            if plot_iter_results:
-                fig, axs = model.plot_predictives(plot_data=True, levels=levels, num_pts=10000000,
-                                                 set_xy_limits=True, set_xy_lbls=True, place_legend=True,
-                                                 validate=False)
-                pdf.savefig(fig)
-                if close_figures:
-                    plt.close(fig=fig)
+        mc_iter = []
+        for j in range(num_realizations):
+            start = j*num_pts_per_realization
+            end = start + num_pts_per_realization
+            out = [sampled_dft_constraints[i][start:end] for i in range(len(sampled_dft_constraints))]
+            mc_iter.append(pd.concat(out))
 
-                figsAxs = model.plot_predictives_corner(plot_data=True, levels=levels, show_box_in_marginals=False,
-                                                        place_legend=True, validate=False)
-                for figAx in figsAxs:
-                    pdf.savefig(figAx[0])
+        # return mc_iter
+        import time
+        if parallel_eval:
+            from multiprocessing import Pool, cpu_count
+            from functools import partial
+            num_workers = int(cpu_count()/2)
+            print("Number of workers : ", num_workers)
+            ct = time.perf_counter()
+            with Pool(processes=num_workers) as pool:
+                out = pool.map(partial(test, quantities=quantities, prior_params=prior_params,
+                               num_samples=num_samples, num_samples_mu_Sigma=num_samples_mu_Sigma),
+                         mc_iter) #, chunksize=1000)
+
+            samples = pd.concat(out)
+            print(f"+++++{time.perf_counter()-ct}")
+            ct = time.perf_counter()
+        #
+        #
+        else:
+            samples = pd.DataFrame()
+            for irealiz in tqdm(range(num_realizations), desc="MC sampling", disable=not progressbar):
+                # set up canvas (and draw saturation box)
+                ct = time.perf_counter()
+                # print(mc_iter[irealiz])
+                # model = model_from_scenario(scenario, quantities=quantities, prior_params=prior_params)
+                model = StatisticalModel(data=mc_iter[irealiz],
+                                         quantities=quantities, prior_params=prior_params)
+
+                # print(f"+++++{time.perf_counter()-ct}")
+                ct = time.perf_counter()
+
+                # store data from current universe (for universe-averaging later on)
+                tmp = model.sample_predictive_bf(return_predictive_only=False, based_on="posterior",
+                                                 num_samples=num_samples,
+                                                 num_samples_mu_Sigma=num_samples_mu_Sigma)  # 100000
+
+                # print(f"+++++{time.perf_counter()-ct}")
+                ct = time.perf_counter()
+
+                tmp["universe"] = irealiz
+                # print(tmp)
+                samples = pd.concat((samples, tmp))
+
+                # print(f"+++++{time.perf_counter()-ct}")
+                ct = time.perf_counter()
+
+                # plot predictive prior and predictive posterior (right panel)
+                if plot_iter_results:
+                    fig, axs = model.plot_predictives(plot_data=True, levels=levels, num_pts=10000000,
+                                                     set_xy_limits=True, set_xy_lbls=True, place_legend=True,
+                                                     validate=False)
+                    pdf.savefig(fig)
                     if close_figures:
-                        plt.close(fig=figAx[0])
+                        plt.close(fig=fig)
+
+                    figsAxs = model.plot_predictives_corner(plot_data=True, levels=levels, show_box_in_marginals=False,
+                                                            place_legend=True, validate=False)
+                    for figAx in figsAxs:
+                        pdf.savefig(figAx[0])
+                        if close_figures:
+                            plt.close(fig=figAx[0])
 
         # plot multi-universe average of the posterior predictive (corner plot)
         use_level = 0.95
@@ -239,5 +284,15 @@ def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
         if iprior_params == 2:
             ax.legend(ncol=2, prop={'size': 7}, frameon=False)
     return fig, axs
+
+
+def test(data, quantities, prior_params, num_samples, num_samples_mu_Sigma):
+        model = StatisticalModel(data=data,
+                                 quantities=quantities, prior_params=prior_params)
+        tmp = model.sample_predictive_bf(return_predictive_only=False, based_on="posterior",
+                                         num_samples=num_samples,
+                                         num_samples_mu_Sigma=num_samples_mu_Sigma)  # 100000
+        # tmp["universe"] = irealiz
+        return tmp
 
 #%%

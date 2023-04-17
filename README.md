@@ -28,19 +28,11 @@ jupyter-notebook&
 * [Insights into nuclear saturation density from parity violating electron scattering][Horowitz:2020]
 * [From finite nuclei to the nuclear liquid drop: Leptodermous expansion based on self-consistent mean-field theory][Reinhard:2005]
 * [Nuclear charge and neutron radii and nuclear matter: trend analysis][Reinhard:2016]
-* Christian's [review article][Drischler2021:AnnRev]
+
 
 ### Misc
 * [Murphy's notes](https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf) on conjugate priors
 
-### Kernel Density Estimation (KDE)
-* https://stackabuse.com/kernel-density-estimation-in-python-using-scikit-learn/
-* https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html
-* https://towardsdatascience.com/simple-example-of-2d-density-plots-in-python-83b83b934f67
-* https://www.python-graph-gallery.com/2d-density-plot/
-* https://seaborn.pydata.org/generated/seaborn.kdeplot.html
-* https://stackoverflow.com/questions/4150171/how-to-create-a-density-plot-in-matplotlib
-* https://www.delftstack.com/howto/matplotlib/matplotlib-density-plot/
 
 ### Bayesian analysis
 * https://arxiv.org/pdf/1408.4050.pdf

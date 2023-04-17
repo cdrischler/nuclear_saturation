@@ -13,7 +13,7 @@ import pandas as pd
 import corner
 from scipy.stats import multivariate_normal
 from StatisticalModel import StatisticalModel
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 class DataSet(ABC):
@@ -334,6 +334,7 @@ class KernelDensityEstimate(DataSet):
         for cls in class_lbl:
             tmp = dframe_filtered[dframe_filtered["class"] == cls]
             samples = tmp.sample(num_pts_per_distr, replace=replace)
+            # print(cls, samples)
             for lbl in ("class", "label"):
                 samples[lbl] = cls
             ret = pd.concat((ret, samples))
@@ -410,25 +411,9 @@ class KernelDensityEstimate(DataSet):
 
 
 @dataclass
-class DataSetSampleConfig:
-    data_set: DataSet
-    sample_from_model: bool = False
-    sample_kwargs: dict = field(default_factory=lambda: dict(exclude=None,
-                                                             num_points=1,
-                                                             num_pts_per_distr=1,
-                                                             num_distr="all")
-                                )
-    sample_from_model_kwargs: dict = field(default_factory=lambda: dict(num_samples=1000,
-                                                                        kind="predictive_y",
-                                                                        based_on="posterior",
-                                                                        validate=False)
-                                           )
-
-
-@dataclass
 class Scenario:
     label: str
-    configs: list
+    datasets: list
 
     @property
     def label_plain(self):

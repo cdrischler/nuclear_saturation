@@ -117,7 +117,7 @@ class StatisticalModel:
         # sampling from numpy's invwishart() is slower than sampling from numpy's wishart()
         # and then inverting the result, so for runtime improvement, let's not use invwishart()
         # unless the number of sampling points requested is "small"
-        if num_samples < 1000:  # arbitrary threshold
+        if num_samples < 10000:  # arbitrary threshold
             Sigmas = invwishart.rvs(df=params["nu"], scale=params["Psi"], size=num_samples, random_state=random_state)
         else:
             Sigmas = np.linalg.inv(wishart.rvs(df=params["nu"], scale=np.linalg.inv(params["Psi"]), size=num_samples, random_state=random_state))
@@ -489,17 +489,4 @@ class StatisticalModel:
         ax.set_xlabel(self.xlabel)
         ax.set_ylabel(self.ylabel)
 
-
-def model_from_scenario(scenario, quantities=None, prior_params=None):
-    sampled_dft_constraints = pd.DataFrame()
-    # print(scenario.label)
-    for task in scenario.configs:
-        if task.sample_from_model:
-            sampled_dft_constraints = task.data_set.sample_from_model(df=sampled_dft_constraints,
-                                                                      **task.sample_kwargs,
-                                                                      **task.sample_from_model_kwargs)
-        else:
-            sampled_dft_constraints = task.data_set.sample(df=sampled_dft_constraints, **task.sample_kwargs)
-    return StatisticalModel(data=sampled_dft_constraints,
-                            quantities=quantities, prior_params=prior_params)
 #%%
