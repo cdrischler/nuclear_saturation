@@ -86,7 +86,7 @@ class SaturationAnalysis:
         file_output = f"{self.pdf_output_path}/{scenario.label_plain}_{label_filename(prior_params['label'])}_"
         file_output += f"{num_samples_mu_Sigma}_{num_realizations}.pdf"
         pdf = matplotlib.backends.backend_pdf.PdfPages(file_output)
-        samples = pd.DataFrame()
+        samples = []
         for irealiz in tqdm(range(num_realizations), desc="MC sampling", disable=not progressbar):
             # set up canvas (and draw saturation box)
             model = model_from_scenario(scenario, quantities=quantities, prior_params=prior_params)
@@ -96,7 +96,7 @@ class SaturationAnalysis:
                                              num_samples=num_samples,
                                              num_samples_mu_Sigma=num_samples_mu_Sigma)  # 100000
             tmp["universe"] = irealiz
-            samples = pd.concat((samples, tmp))
+            samples.append(tmp)
 
             # plot predictive prior and predictive posterior (right panel)
             if plot_iter_results:
@@ -113,6 +113,8 @@ class SaturationAnalysis:
                     pdf.savefig(figAx[0])
                     if close_figures:
                         plt.close(fig=figAx[0])
+
+        samples = pd.concat(samples)
 
         # plot multi-universe average of the posterior predictive (corner plot)
         use_level = 0.95
