@@ -116,7 +116,7 @@ class SaturationAnalysis:
         #
         #
         else:
-            samples = pd.DataFrame()
+            samples = []
             for irealiz in tqdm(range(num_realizations), desc="MC sampling", disable=not progressbar):
                 # set up canvas (and draw saturation box)
                 ct = time.perf_counter()
@@ -138,7 +138,7 @@ class SaturationAnalysis:
 
                 tmp["universe"] = irealiz
                 # print(tmp)
-                samples = pd.concat((samples, tmp))
+                samples.append(tmp)
 
                 # print(f"+++++{time.perf_counter()-ct}")
                 ct = time.perf_counter()
@@ -158,6 +158,7 @@ class SaturationAnalysis:
                         pdf.savefig(figAx[0])
                         if close_figures:
                             plt.close(fig=figAx[0])
+            samples = pd.concat(samples)
 
         # plot multi-universe average of the posterior predictive (corner plot)
         use_level = 0.95
