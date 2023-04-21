@@ -75,11 +75,12 @@ class SaturationAnalysis:
                             quantities=None, prior_params=prior_params)
 
     @staticmethod
-    def __sample_dft_realizations(datasets, num_realizations, num_pts_per_dft_model, sample_replace):
+    def __sample_dft_realizations(datasets, num_realizations, num_pts_per_dft_model, sample_replace,
+                                  random_state=None):
         num_points = num_realizations*num_pts_per_dft_model
-        use_kwargs = dict(df=None, replace=sample_replace,
+        use_kwargs = dict(df=None, replace=sample_replace, random_state=random_state,
                           exclude=None, num_points=num_points,
-                          num_pts_per_distr=1, num_distr="all")  # TODO: add rng?
+                          num_pts_per_distr=1, num_distr="all") 
         sampled_dft_constraints = [dset.sample(**use_kwargs) for dset in datasets]
 
         mc_iter = []
@@ -97,9 +98,11 @@ class SaturationAnalysis:
         if "parallel" in mode:
             # pre-store all (random) DFT realizations
             print(f"\tGenerating {num_realizations} DFT realizations")
+            rng = np.random.default_rng(seed=None)
             dft_realizations = self.__sample_dft_realizations(num_realizations=num_realizations,
                                                               num_pts_per_dft_model=num_pts_per_dft_model,
-                                                              sample_replace=sample_replace, datasets=scenario.datasets)
+                                                              sample_replace=sample_replace,
+                                                              datasets=scenario.datasets, random_state=rng)
             print(f"\tRequired time for generating all DFT realizations: {time.perf_counter()-ct:.6f} s")
 
             # construct models for these realizations and sample from their posterior distributions
@@ -117,6 +120,7 @@ class SaturationAnalysis:
             samples = pd.concat(out)
         else:  # serial evaluation (useful for debugging)
             samples = []
+            rng = np.random.default_rng(seed=None)
             for irealiz in tqdm(range(num_realizations), desc="MC sampling (serial)", disable=True):
                 # generate DFT realization
                 sampled_dft_constraints = pd.DataFrame()
@@ -181,7 +185,7 @@ class SaturationAnalysis:
             if levels is None:
                 levels = np.array((0.5, 0.8, 0.95, 0.99))
             levels = np.atleast_1d(levels)
-            file_output = f"{self.pdf_output_path}/{scenario.label_plain}_{label_filename(prior_params['label'])}_"
+            file_output = f"{self.pdf_output_path}/{mode}_{scenario.label_plain}_{label_filename(prior_params['label'])}_"
             file_output += f"{num_samples_mu_Sigma}_{num_realizations}.pdf"
             self.plot_samples(samples=samples, levels=levels, bins=bins,
                               prior_params=prior_params, plot_fitted_conf_regions=plot_fitted_conf_regions,
