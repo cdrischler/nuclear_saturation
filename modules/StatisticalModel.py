@@ -180,7 +180,7 @@ class StatisticalModel:
                                       shape=shape_matrix,
                                       size=num_samples, random_state=random_state)  # Eqs. (256) and (258) in Murphy's notes
 
-    def sample_predictive_bf(self, num_samples=1, num_samples_mu_Sigma=100000, fast_math=True,
+    def sample_predictive_bf(self, num_samples_mu_Sigma=100000, fast_math=True,
                              return_predictive_only=True, based_on="posterior", random_state=None):
         """
         Samples the posterior predictive or prior predictive brute-force in the two-step process described in
@@ -202,7 +202,7 @@ class StatisticalModel:
             Ls = np.linalg.cholesky(Sigmas)
             predictive = mus + np.einsum('nij,njk->nik', Ls, seeds[:, :, np.newaxis])[:, :, 0]
         else:
-            predictive = np.array([multivariate_normal.rvs(mean=mu, cov=Sigma, size=num_samples) for mu, Sigma in zip(mus, Sigmas)])
+            predictive = np.array([multivariate_normal.rvs(mean=mu, cov=Sigma, size=1) for mu, Sigma in zip(mus, Sigmas)])
         if return_predictive_only:
             return predictive
         else:
