@@ -80,7 +80,7 @@ class SaturationAnalysis:
         num_points = num_realizations*num_pts_per_dft_model
         use_kwargs = dict(df=None, replace=sample_replace, random_state=random_state,
                           exclude=None, num_points=num_points,
-                          num_pts_per_distr=1, num_distr="all") 
+                          num_pts_per_distr=1, num_distr="all")
         sampled_dft_constraints = [dset.sample(**use_kwargs) for dset in datasets]
 
         mc_iter = []
@@ -91,105 +91,97 @@ class SaturationAnalysis:
             mc_iter.append(pd.concat(out))
         return mc_iter
 
-    def sample_all_mix_models(self, num_realizations, num_pts_per_dft_model, sample_replace, scenario,
-                              quantities, prior_params, num_samples_posterior, num_samples_mu_Sigma,
-                              max_num_workers=8, mode="full_parallel", plot_iter_results=False):
+    @staticmethod
+    def sample_mix_models_batch(batch_size, num_pts_per_dft_model, sample_replace, scenario,
+                                quantities, prior_params, num_samples_mu_Sigma, plot_iter_results):
+        # step 1: pre-store all (random) DFT realizations
+        print(f"\tGenerating {batch_size} DFT realizations", flush=True)
+        global rng
         ct = time.perf_counter()
-        if "parallel" in mode:
-            # pre-store all (random) DFT realizations
-            print(f"\tGenerating {num_realizations} DFT realizations")
-            rng = np.random.default_rng(seed=None)
-            dft_realizations = self.__sample_dft_realizations(num_realizations=num_realizations,
-                                                              num_pts_per_dft_model=num_pts_per_dft_model,
-                                                              sample_replace=sample_replace,
-                                                              datasets=scenario.datasets, random_state=rng)
-            print(f"\tRequired time for generating all DFT realizations: {time.perf_counter()-ct:.6f} s")
+        dft_realizations = SaturationAnalysis.__sample_dft_realizations(
+            num_realizations=batch_size,
+            num_pts_per_dft_model=num_pts_per_dft_model,
+            sample_replace=sample_replace,
+            datasets=scenario.datasets,
+            random_state=rng
+        )
+        print(f"\tRequired time for generating all DFT realizations: {time.perf_counter()-ct:.6f} s", flush=True)
 
-            # construct models for these realizations and sample from their posterior distributions
-            ct = time.perf_counter()
-            iter_func = partial(SaturationAnalysis.sample_from_model, quantities=quantities, prior_params=prior_params,
-                                num_samples=num_samples_posterior, num_samples_mu_Sigma=num_samples_mu_Sigma)
-            if mode == "full_parallel":
-                # set number of workers and status report
-                num_workers = np.max((int(cpu_count()/2), max_num_workers))
-                print("\tNumber of workers used for mixture model sampling:", num_workers)
-                with Pool(processes=num_workers) as pool:
-                    out = pool.map(iter_func, dft_realizations)  # , chunksize=1000)
-            else:
-                out = map(iter_func, dft_realizations)
-            samples = pd.concat(out)
-        else:  # serial evaluation (useful for debugging)
-            samples = []
-            rng = np.random.default_rng(seed=None)
-            for irealiz in tqdm(range(num_realizations), desc="MC sampling (serial)", disable=True):
-                # generate DFT realization
-                sampled_dft_constraints = pd.DataFrame()
-                for dset in scenario.datasets:
-                    sampled_dft_constraints = dset.sample(df=sampled_dft_constraints, **task.sample_kwargs)
-                # set up model for generated DFT realization
-                model = StatisticalModel(data=sampled_dft_constraints, quantities=quantities, prior_params=prior_params)
-                # sample posterior
-                tmp = model.sample_predictive_bf(return_predictive_only=False, based_on="posterior",
-                                                 num_samples=num_samples_posterior,
-                                                 num_samples_mu_Sigma=num_samples_mu_Sigma)  # 100000
-                tmp["universe"] = irealiz
+        # step 2: construct models for these realizations and sample from their posterior distributions
+        ct = time.perf_counter()
+        iter_func = partial(SaturationAnalysis.sample_from_model, quantities=quantities, prior_params=prior_params,
+                            num_samples_mu_Sigma=num_samples_mu_Sigma)
+        out = map(iter_func, dft_realizations)
+        samples = pd.concat(out)
+        print(f"\tRequired time for sampling from all mixture models: {time.perf_counter()-ct:.6f} s", flush=True)
 
-                # plot predictive prior and predictive posterior (right panel)
-                if plot_iter_results:
-                    levels = np.array((0.5, 0.8, 0.95, 0.99))
-                    fig, axs = model.plot_predictives(plot_data=True, levels=levels, num_pts=10000000,
-                                                      set_xy_limits=True, set_xy_lbls=True, place_legend=True,
-                                                      validate=False)
-
-                    file_output = f"{self.pdf_output_path}/{scenario.label_plain}_{label_filename(prior_params['label'])}_"
-                    file_output += f"{num_samples_mu_Sigma}_{num_realizations}.pdf"
-                    pdf = matplotlib.backends.backend_pdf.PdfPages(file_output)
-                    pdf.savefig(fig)
-                    plt.close(fig=fig)
-
-                    figsAxs = model.plot_predictives_corner(plot_data=True, levels=levels, show_box_in_marginals=False,
-                                                            place_legend=True, validate=False)
-                    for figAx in figsAxs:
-                        pdf.savefig(figAx[0])
-                        plt.close(fig=figAx[0])
-            samples = pd.concat(samples)
-        print(f"\tRequired time for sampling from all mixture models ({mode}): {time.perf_counter()-ct:.6f} s")
+        # # plot predictive prior and predictive posterior (right panel)
+        # if plot_iter_results:
+        #     levels = np.array((0.5, 0.8, 0.95, 0.99))
+        #     fig, axs = model.plot_predictives(plot_data=True, levels=levels, num_pts=10000000,
+        #                                       set_xy_limits=True, set_xy_lbls=True, place_legend=True,
+        #                                       validate=False)
+        #
+        #     file_output = f"{self.pdf_output_path}/{scenario.label_plain}_{label_filename(prior_params['label'])}_"
+        #     file_output += f"{num_samples_mu_Sigma}_{num_realizations}.pdf"
+        #     pdf = matplotlib.backends.backend_pdf.PdfPages(file_output)
+        #     pdf.savefig(fig)
+        #     plt.close(fig=fig)
+        #
+        #     figsAxs = model.plot_predictives_corner(plot_data=True, levels=levels, show_box_in_marginals=False,
+        #                                             place_legend=True, validate=False)
+        #     for figAx in figsAxs:
+        #         pdf.savefig(figAx[0])
+        #         plt.close(fig=figAx[0])
+        #
         return samples
 
     @staticmethod
-    def sample_from_model(data, quantities, prior_params, num_samples, num_samples_mu_Sigma):
+    def sample_from_model(data, quantities, prior_params, num_samples_mu_Sigma):  # TODO: pass rng
         model = StatisticalModel(data=data, quantities=quantities, prior_params=prior_params)
         tmp = model.sample_predictive_bf(return_predictive_only=False, based_on="posterior",
-                                         num_samples=num_samples,
-                                         num_samples_mu_Sigma=num_samples_mu_Sigma)  # 100000
-        # tmp["universe"] = irealiz
+                                         num_samples_mu_Sigma=num_samples_mu_Sigma)
         return tmp
 
     def mc_iterate(self, scenario=None, num_realizations=1000000, num_pts_per_dft_model=1, sample_replace=True,
-                   levels=None, quantities=None, mode=None, prior_params=None, bins=100, debug=True,
-                   plot_fitted_conf_regions=True, plot_iter_results=False,
-                   num_samples_posterior=1, num_samples_mu_Sigma=10):
-        mode_list = ("full_parallel", "semi_parallel", "serial") if mode is None else mode
-        for mode in mode_list:
-            print(f"Running MC iteration in mode '{mode}':")
-            # step 1: create samples
-            samples = self.sample_all_mix_models(num_realizations=num_realizations,
-                                                 num_pts_per_dft_model=num_pts_per_dft_model,
-                                                 sample_replace=sample_replace,
-                                                 scenario=scenario, quantities=quantities,
-                                                 prior_params=prior_params,
-                                                 num_samples_posterior=num_samples_posterior,
-                                                 num_samples_mu_Sigma=num_samples_mu_Sigma,
-                                                 max_num_workers=8, mode=mode, plot_iter_results=plot_iter_results)
-            # step 2: plot samples
-            if levels is None:
-                levels = np.array((0.5, 0.8, 0.95, 0.99))
-            levels = np.atleast_1d(levels)
-            file_output = f"{self.pdf_output_path}/{mode}_{scenario.label_plain}_{label_filename(prior_params['label'])}_"
-            file_output += f"{num_samples_mu_Sigma}_{num_realizations}.pdf"
-            self.plot_samples(samples=samples, levels=levels, bins=bins,
-                              prior_params=prior_params, plot_fitted_conf_regions=plot_fitted_conf_regions,
-                              add_info=mode.replace("-", " "), debug=debug, file_output=file_output)
+                   levels=None, quantities=None, prior_params=None, bins=100, debug=True,
+                   plot_fitted_conf_regions=True, plot_iter_results=False, req_num_workers=10,
+                   num_samples_mu_Sigma=10):
+        ct = time.perf_counter()
+        # step 1: determine batch sizes
+        max_num_workers = cpu_count()//2
+        num_workers = np.min((req_num_workers, max_num_workers))
+        print(f"Number of workers used for mixture model sampling: {num_workers} (max: {max_num_workers})")
+        batch_sizes = [len(elem) for elem in np.array_split(range(num_realizations), 20)]
+        print(batch_sizes)
+
+        # step 2: create samples
+        iter_func = partial(SaturationAnalysis.sample_mix_models_batch,
+                            num_pts_per_dft_model=num_pts_per_dft_model,
+                            sample_replace=sample_replace,
+                            scenario=scenario,
+                            quantities=quantities,
+                            prior_params=prior_params,
+                            num_samples_mu_Sigma=num_samples_mu_Sigma,
+                            plot_iter_results=(plot_iter_results and num_workers == 1)
+                            )
+
+        with Pool(processes=num_workers, initializer=worker_init) as pool:
+            out = pool.map(iter_func, batch_sizes) #, chunksize=1)
+        samples = pd.concat(out)
+        print(f"Total number of samples: {len(samples)}")
+        print(f"\tRequired time for generating all DFT realizations: {time.perf_counter()-ct:.6f} s", flush=True)
+
+        # step 3: plot samples
+        if levels is None:
+            levels = np.array((0.5, 0.8, 0.95, 0.99))
+        levels = np.atleast_1d(levels)
+        file_output = f"{self.pdf_output_path}/workers_{req_num_workers}_{scenario.label_plain}_"
+        file_output += f"{label_filename(prior_params['label'])}_{num_samples_mu_Sigma}_{num_realizations}.pdf"
+        fit = self.plot_samples(samples=samples, levels=levels, bins=bins,
+                                prior_params=prior_params, plot_fitted_conf_regions=plot_fitted_conf_regions,
+                                add_info=None, debug=debug, file_output=file_output)
+        return fit
 
     def plot_samples(self, samples, debug, levels, bins, prior_params,
                      plot_fitted_conf_regions, file_output, add_info=None):
@@ -309,5 +301,12 @@ def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
             ax.legend(ncol=2, prop={'size': 7}, frameon=False)
     return fig, axs
 
+
+def worker_init():
+    global worker_id, rng
+    worker_id = os.getpid()
+    # print(f"Worker {worker_id} initialized.", flush=True)
+    root_seed = 223123  # TODO
+    rng = np.random.default_rng([worker_id, root_seed])
 
 #%%
