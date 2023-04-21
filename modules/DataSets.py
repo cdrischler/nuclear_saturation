@@ -28,11 +28,12 @@ class DataSet(ABC):
             return self.data_frame.loc[~self.data_frame[exclude_in_col].isin(np.atleast_1d(exclude))]
 
     def get_statistical_model(self, exclude=None, num_points=1, num_pts_per_distr=1,
-                              num_distr="all", replace=True, quantities=None, prior_params=None, **kwargs):
+                              num_distr="all", replace=True, quantities=None, prior_params=None,
+                              random_state=None, **kwargs):
         if isinstance(self, GenericDataSet):
             data = self.get_data_frame(exclude=exclude)
         else:
-            data = self.sample(df=None, num_points=num_points, num_distr=num_distr,
+            data = self.sample(df=None, num_points=num_points, num_distr=num_distr, random_state=random_state,
                                num_pts_per_distr=num_pts_per_distr, replace=replace, exclude=exclude)
         return StatisticalModel(data=data, quantities=quantities, prior_params=prior_params)
 
@@ -91,10 +92,10 @@ class GenericDataSet(DataSet):
     def __add__(self, other):
         return GenericDataSet(filenames=self.filenames + other.filenames)
 
-    def sample(self, df=None, num_points=1, replace=True, exclude=None, **kwargs):
+    def sample(self, df=None, num_points=1, replace=True, exclude=None, random_state=None, **kwargs):
         ret = self.get_data_frame(exclude=exclude)
         if isinstance(num_points, int):
-            ret = self.get_data_frame(exclude=exclude).sample(num_points, replace=replace)
+            ret = self.get_data_frame(exclude=exclude).sample(num_points, replace=replace, random_state=random_state)
         elif num_points not in (None, "all"):
             raise ValueError(f"'num_points has to be int, 'None', or 'all', got '{num_points}'")
         if df is not None:
@@ -202,10 +203,11 @@ class NormDistDataSet(DataSet):
         cov = np.array([[row["sigma rho0"]**2, offdiag], [offdiag, row["sigma E/A"]**2]])
         return mean, cov
 
-    def sample(self, df=None, num_points=1, num_distr="all", num_pts_per_distr=None, replace=True, exclude=None, **kwargs):
+    def sample(self, df=None, num_points=1, num_distr="all", num_pts_per_distr=None, replace=True, exclude=None,
+               random_state=None, **kwargs):
         data = self.get_data_frame(exclude=exclude)
         if isinstance(num_distr, int):
-            data = data.sample(num_distr, replace=replace)
+            data = data.sample(num_distr, replace=replace, random_state=random_state)
         elif num_distr != "all":
             raise ValueError(f"'num_distr' should be int or 'all', got '{num_distr}'.")
         num_distr = len(data)
@@ -224,7 +226,7 @@ class NormDistDataSet(DataSet):
             ret = pd.concat((ret, result_row))
 
         if num_points is not None:
-            ret = ret.sample(n=num_points, replace=len(ret) < num_points)
+            ret = ret.sample(n=num_points, replace=len(ret) < num_points, random_state=random_state)
 
         if df is not None:
             ret = pd.concat((df, ret))
@@ -318,14 +320,14 @@ class KernelDensityEstimate(DataSet):
         return files, data
 
     def sample(self, df=None, num_points=1, num_distr="all", num_pts_per_distr=None,
-               replace=True, exclude=None, **kwargs):
+               replace=True, exclude=None, random_state=None, **kwargs):
         class_lbl = self.data_frame["class"].unique()
         if isinstance(num_distr, int):
             class_lbl = np.random.choice(class_lbl, num_distr, replace=replace)
         elif num_distr != "all":
             raise ValueError(f"'num_distr' should be int or 'all', got '{num_distr}'.")
         num_distr = len(class_lbl)
-
+        print(self.set_specifier, random_state)
         if num_pts_per_distr is None:
             num_pts_per_distr = int(np.max([1, num_points/num_distr]))
 
@@ -333,14 +335,14 @@ class KernelDensityEstimate(DataSet):
         dframe_filtered = self.get_data_frame(exclude=exclude)
         for cls in class_lbl:
             tmp = dframe_filtered[dframe_filtered["class"] == cls]
-            samples = tmp.sample(num_pts_per_distr, replace=replace)
+            samples = tmp.sample(num_pts_per_distr, replace=replace, random_state=random_state)
             # print(cls, samples)
             for lbl in ("class", "label"):
                 samples[lbl] = cls
             ret = pd.concat((ret, samples))
 
         if num_points is not None:
-            ret = ret.sample(n=num_points, replace=len(ret) < num_points)
+            ret = ret.sample(n=num_points, replace=len(ret) < num_points, random_state=random_state)
 
         if df is not None:
             ret = pd.concat((df, ret))
