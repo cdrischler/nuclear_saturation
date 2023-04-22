@@ -110,7 +110,7 @@ class SaturationAnalysis:
         # step 2: construct models for these realizations and sample from their posterior distributions
         ct = time.perf_counter()
         iter_func = partial(SaturationAnalysis.sample_from_model, quantities=quantities, prior_params=prior_params,
-                            num_samples_mu_Sigma=num_samples_mu_Sigma)
+                            num_samples_mu_Sigma=num_samples_mu_Sigma, random_state=rng)
         out = map(iter_func, dft_realizations)
         samples = pd.concat(out)
         print(f"\tRequired time for sampling from all mixture models: {time.perf_counter()-ct:.6f} s", flush=True)
@@ -137,11 +137,10 @@ class SaturationAnalysis:
         return samples
 
     @staticmethod
-    def sample_from_model(data, quantities, prior_params, num_samples_mu_Sigma):  # TODO: pass rng
+    def sample_from_model(data, quantities, prior_params, num_samples_mu_Sigma, random_state):
         model = StatisticalModel(data=data, quantities=quantities, prior_params=prior_params)
-        tmp = model.sample_predictive_bf(return_predictive_only=False, based_on="posterior",
-                                         num_samples_mu_Sigma=num_samples_mu_Sigma)
-        return tmp
+        return model.sample_predictive_bf(return_predictive_only=False, based_on="posterior",
+                                          num_samples_mu_Sigma=num_samples_mu_Sigma, random_state=random_state)
 
     def mc_iterate(self, scenario=None, num_realizations=1000000, num_pts_per_dft_model=1, sample_replace=True,
                    levels=None, quantities=None, prior_params=None, bins=100, debug=True,
@@ -152,8 +151,8 @@ class SaturationAnalysis:
         max_num_workers = cpu_count()//2
         num_workers = np.min((req_num_workers, max_num_workers))
         print(f"Number of workers used for mixture model sampling: {num_workers} (max: {max_num_workers})")
-        batch_sizes = [len(elem) for elem in np.array_split(range(num_realizations), 20)]
-        print(batch_sizes)
+        batch_sizes = [len(elem) for elem in np.array_split(range(num_realizations), 4*num_workers)]
+        print(batch_sizes, len(batch_sizes))
 
         # step 2: create samples
         iter_func = partial(SaturationAnalysis.sample_mix_models_batch,
