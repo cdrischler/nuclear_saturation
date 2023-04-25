@@ -120,8 +120,10 @@ class StatisticalModel:
         if num_samples < 10000:  # arbitrary threshold
             Sigmas = invwishart.rvs(df=params["nu"], scale=params["Psi"], size=num_samples, random_state=random_state)
         else:
-            Sigmas = np.linalg.inv(wishart.rvs(df=params["nu"], scale=np.linalg.inv(params["Psi"]), size=num_samples, random_state=random_state))
-        # https://www.math.wustl.edu/~sawyer/hmhandouts/Wishart.pdf (mentions are fast method to sample wishart(); see Odell et al. in that pdf
+            Sigmas = np.linalg.inv(wishart.rvs(df=params["nu"], scale=np.linalg.inv(params["Psi"]),
+                                               size=num_samples, random_state=random_state))
+        # https://www.math.wustl.edu/~sawyer/hmhandouts/Wishart.pdf
+        # mentions are fast method to sample wishart(); see Odell et al. in that pdf
         # https://en.wikipedia.org/wiki/Wishart_distribution#Definition
 
         if num_samples == 1:
