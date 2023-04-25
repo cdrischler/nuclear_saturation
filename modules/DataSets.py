@@ -375,25 +375,31 @@ class KernelDensityEstimate(DataSet):
                 # Note: sns.kdeplot() seems to have issues with displaying the handles in legends
             else:
                 if "schunck" in cls.lower():
-                    use_colorset = sorted(colors)
+                    use_colorset = sorted(colors[3:])
                     label = "Schunck $\it{et~al.}$ (\'20" + f", {level*100:.0f}\%)"
+                    bins = 16
                 elif "giuliani" in cls.lower():
                     use_colorset = sorted(flatui)
                     label = "Giuliani $\it{et~al.}$ (\'22" + f", {level*100:.0f}\%)"
+                    bins = 30
+                elif "mcdonnell" in cls.lower():
+                    use_colorset = ["0.5"]
+                    label = "McDonnell $\it{et~al.}$ (\'15" + f", {level*100:.0f}\%)"
+                    bins = 10
                 else:
                     use_colorset = sorted(colorset)
                     label = cls
+                    bins = 20
 
                 color = use_colorset[-icls]
                 corner.hist2d(x=dframe_filtered[mask]["rho0"].to_numpy(),
                               y=dframe_filtered[mask]["E/A"].to_numpy(),
-                              bins=25, range=None, weights=None,
+                              bins=bins, range=None, weights=None,
                               levels=np.atleast_1d(level), smooth=None, ax=ax, color=color,
                               quiet=False, plot_datapoints=plot_scatter, plot_density=False,
                               plot_contours=True, no_fill_contours=True, fill_contours=None,
                               contour_kwargs=None, contourf_kwargs=None, data_kwargs=None,
                               pcolor_kwargs=None, new_fig=False)
-
                 patch = mpatches.Patch(edgecolor=color, facecolor="none",
                                        label=label.replace(" $\it{et~al.}$", "+"))
                 additional_legend_handles.append(patch)
