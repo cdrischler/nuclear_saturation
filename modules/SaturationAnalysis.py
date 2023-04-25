@@ -60,6 +60,52 @@ class SaturationAnalysis:
                 self.eft_predictions = EftPredictions(show_result=True)
             self.eft_predictions.plot(ax=ax, level=eft_conf_level, plot_scatter=eft_plot_scatter)
             pdf.savefig(fig)
+
+        if add_svm:
+            # https://scikit-learn.org/stable/auto_examples/svm/plot_separating_hyperplane.html
+            # generate data
+            data = []
+            for key, val in dft_constraints.items():
+                if isinstance(val, NormDistDataSet):
+                    tmp = val.data_frame[["mean rho0", "mean E/A"]].rename(
+                        columns={"mean rho0": "rho0", "mean E/A": "E/A"}, errors="raise")
+                    data.append(tmp)
+                elif isinstance(val, KernelDensityEstimate):
+                    tmp = val.data_frame[["rho0", "E/A"]].mean()
+                    tmp = pd.DataFrame(data={"rho0": [tmp.loc["rho0"]], "E/A": [tmp.loc["E/A"]]})
+                    data.append(tmp)
+                else:
+                    data.append(val.data_frame[["rho0", "E/A"]])
+            data = pd.concat(data)
+
+            from sklearn import svm
+            from sklearn import DecisionBoundaryDisplay
+
+            # fit the model, don't regularize for illustration purposes
+            clf = svm.SVC(kernel="linear", C=1000)
+            clf.fit(data["rho0"], data["E/A"])
+
+            # plot the decision function
+            DecisionBoundaryDisplay.from_estimator(
+                clf,
+                data["rho0"],
+                plot_method="contour",
+                colors="k",
+                levels=[-1, 0, 1],
+                alpha=0.5,
+                linestyles=["--", "-", "--"],
+                ax=ax,
+            )
+            # plot support vectors
+            ax.scatter(
+                clf.support_vectors_[:, 0],
+                clf.support_vectors_[:, 1],
+                s=100,
+                linewidth=1,
+                facecolors="none",
+                edgecolors="k",
+            )
+
         pdf.close()
         # return fig, ax
 
