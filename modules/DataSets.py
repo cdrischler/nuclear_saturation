@@ -69,8 +69,8 @@ class DataSet(ABC):
 
     @staticmethod
     def set_axes_ranges(ax):
-        ax.set_xlim(0.145, 0.175)
-        ax.set_ylim(-16.5, -14.7)
+        ax.set_xlim(0.146, 0.172)
+        ax.set_ylim(-16.45, -15.45)
 
     @staticmethod
     def set_axes_labels(ax):
