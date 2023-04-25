@@ -120,7 +120,7 @@ class GenericDataSet(DataSet):
             for clbls in dframe["class"].unique():
                 idxs = np.where(dframe["class"] == clbls)
                 ax.scatter(dframe.iloc[idxs]["rho0"], dframe.iloc[idxs]["E/A"],
-                           #color="k",
+                           zorder=100, edgecolor="k", lw=0.5,  #color="k",
                            s=marker_size, label=self.humanize_class_labels(clbls))
         if add_axis_labels:
             super().set_axes_labels(ax)
