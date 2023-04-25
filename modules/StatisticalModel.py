@@ -132,13 +132,12 @@ class StatisticalModel:
             # much faster to sample all requested points at once from a seed normal distribution N(mu=0, sigma=unity)
             # and then rescale the obtained sample to the target mean and target covariance matrix; see also
             # https://stackoverflow.com/questions/42837646/fast-way-of-drawing-multivariate-normal-in-python
-            seeds = np.random.multivariate_normal(np.zeros(2), np.eye(2), size=num_samples)
+            seeds = np.random.multivariate_normal(np.zeros(2), np.eye(2), size=num_samples, random_state=random_state)
             Ls = np.linalg.cholesky(Sigmas/params["kappa"])
             mus = params["mu"] + np.einsum('nij,njk->nik', Ls, seeds[:, :, np.newaxis])[:, :, 0]
         else:
             mus = np.array([multivariate_normal.rvs(mean=params["mu"], cov=Sigma/params["kappa"],
-                                                    size=1, random_state=None) for Sigma in Sigmas])
-            # note in the line above that `random_state=None`; using a given state would bias the results
+                                                    size=1, random_state=random_state) for Sigma in Sigmas])
         return mus, Sigmas
 
     def sample(self, num_samples=1, kind="predictive_y", based_on="posterior", random_state=None, validate=True):
