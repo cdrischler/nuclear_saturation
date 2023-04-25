@@ -17,9 +17,21 @@ from dataclasses import dataclass
 
 
 class DataSet(ABC):
-    def __init__(self, filenames):
+    def __init__(self, set_specifier, filenames):
+        self.set_specifier = set_specifier
         self.filenames = [filenames] if isinstance(filenames, str) else filenames
         self.data_frame = None
+
+    def humanize_class_labels(self, clbl):  #TODO
+        trans = dict(
+            dutra_skyrme="Dutra et al. (\'12)",
+            kortelainen="Kortelainen et al. (\'14)",
+            brown="Brown (\'21)",
+            dutra_rmf="Dutra et al. (\'14)"
+        )
+        default_value = clbl[0].upper()
+        default_value = default_value.replace("_", " ")
+        return trans.get(clbl, default_value).replace(" et al.", "+")  # " $\it{et~al.}$")
 
     def get_data_frame(self, exclude=None, exclude_in_col="label"):
         if exclude is None:
@@ -29,7 +41,7 @@ class DataSet(ABC):
 
     def get_statistical_model(self, exclude=None, num_points=1, num_pts_per_distr=1,
                               num_distr="all", replace=True, quantities=None, prior_params=None,
-                              random_state=None, **kwargs):
+                              random_state=None):
         if isinstance(self, GenericDataSet):
             data = self.get_data_frame(exclude=exclude)
         else:
@@ -89,17 +101,18 @@ class DataSet(ABC):
 
 
 class GenericDataSet(DataSet):
-    def __init__(self, filenames):
-        super().__init__(filenames=filenames)
+    def __init__(self, set_specifier, filenames):
+        super().__init__(set_specifier=set_specifier, filenames=filenames)
         self.data_frame = super().read_csv_files(self.filenames)
 
     def __add__(self, other):
-        return GenericDataSet(filenames=self.filenames + other.filenames)
+        return GenericDataSet(set_specifier=self.set_specifier + other.set_specifier,
+                              filenames=self.filenames + other.filenames)
 
-    def sample(self, df=None, num_points=1, replace=True, exclude=None, random_state=None, **kwargs):
+    def sample(self, df=None, num_points=1, replace=True, exclude=None, random_state=None):
         ret = self.get_data_frame(exclude=exclude)
         if isinstance(num_points, int):
-            ret = self.get_data_frame(exclude=exclude).sample(num_points, replace=replace, random_state=random_state)
+            ret = ret.sample(num_points, replace=replace, random_state=random_state)
         elif num_points not in (None, "all"):
             raise ValueError(f"'num_points has to be int, 'None', or 'all', got '{num_points}'")
         if df is not None:
@@ -132,17 +145,6 @@ class GenericDataSet(DataSet):
             super().legend(ax)
         super().set_axes_ranges(ax)
 
-    def humanize_class_labels(self, clbl):
-        trans = dict(
-            dutra_skyrme="Dutra et al. (\'12)",
-            kortelainen="Kortelainen et al. (\'14)",
-            brown="Brown (\'21)",
-            dutra_rmf="Dutra et al. (\'14)"
-        )
-        default_value = clbl[0].upper()
-        default_value = default_value.replace("_", " ")
-        return trans.get(clbl, default_value).replace(" et al.", "+")  # " $\it{et~al.}$")
-
     def box_estimate(self, print_result=False, exclude=None):
         result = dict()
         for dim in ("rho0", "E/A"):
@@ -161,40 +163,27 @@ class GenericDataSet(DataSet):
 
 
 class NormDistDataSet(DataSet):
-    def __init__(self, filenames=None, set_specifier=None):
-        filenames, data = NormDistDataSet.get_data(filenames, set_specifier)
-        super().__init__(filenames=filenames)
+    def __init__(self, set_specifier):
+        filenames, data = self.get_data(set_specifier)
+        super().__init__(set_specifier=set_specifier, filenames=filenames)
         self.data_frame = data
 
     @staticmethod
-    def get_data(filenames, set_specifier):
-        use_filenames = bool(filenames)
-        use_specifier = bool(set_specifier)
-        if use_filenames == use_specifier:
-            raise ValueError("Need to specify either `filenames` or `set_specifier`")
-
+    def get_data(set_specifier):
         data = []; labels = []
-        if use_filenames:
-            files = filenames
-        else:
-            if set_specifier == "fsu_rmf":
-                files = sorted(glob.glob("data/Piekarewicz/*/CovEllipse.com"))
-            elif set_specifier in ("sv-min", "tov"):
-                files = ["data/Reinhard/CovEllipse.dat"]
-            else:
-                raise ValueError(f"unknown `set_specifier` '{set_specifier}'")
-
         if set_specifier == "fsu_rmf":
+            files = sorted(glob.glob("data/Piekarewicz/*/CovEllipse.com"))
             for file in files:
                 labels.append(re.search(r"(\w+)/Cov", file).group(1))
                 data.append(open(file, 'r').readlines()[3].strip().split(","))
-            data = pd.DataFrame(data, columns=("mean rho0", "mean E/A", "sigma rho0", "sigma E/A", "rho"), dtype=np.float64)
+            data = pd.DataFrame(data, columns=("mean rho0", "mean E/A", "sigma rho0", "sigma E/A", "rho"),
+                                dtype=np.float64)
             data["label"] = labels
-        else:
+        elif set_specifier == "reinhard":
+            files = ["data/Reinhard/CovEllipse.dat"]*2
             data = pd.read_csv(files[0])
-            label = {"sv-min": "SV-min", "tov": "TOV"}[set_specifier]
-            data = data.loc[data['label'] == label]
-            data["label"] = label
+        else:
+            raise ValueError(f"unknown `set_specifier` '{set_specifier}'")
 
         data["class"] = set_specifier
         data["file"] = files
@@ -207,31 +196,28 @@ class NormDistDataSet(DataSet):
         cov = np.array([[row["sigma rho0"]**2, offdiag], [offdiag, row["sigma E/A"]**2]])
         return mean, cov
 
-    def sample(self, df=None, num_points=1, num_distr="all", num_pts_per_distr=None, replace=True, exclude=None,
-               random_state=None, **kwargs):
+    def sample(self, df=None, num_points=1, replace=True, exclude=None, random_state=None):
         data = self.get_data_frame(exclude=exclude)
-        if isinstance(num_distr, int):
-            data = data.sample(num_distr, replace=replace, random_state=random_state)
-        elif num_distr != "all":
-            raise ValueError(f"'num_distr' should be int or 'all', got '{num_distr}'.")
-        num_distr = len(data)
+        data.reset_index()
+        counts = data.sample(num_points, replace=replace, random_state=random_state).index.value_counts()
+        # does not preserve order (we don't need to) but is much faster
 
-        if num_pts_per_distr is None:
-            num_pts_per_distr = int(np.max([1, num_points/num_distr]))
-
-        ret = pd.DataFrame()
+        ret = []
         for irow, row in data.iterrows():
             mean, cov = NormDistDataSet.from_row_to_mean_cov(row)
-            samples = multivariate_normal.rvs(mean=mean, cov=cov, size=num_pts_per_distr)
+            if irow not in counts.index:
+                continue
+            samples = multivariate_normal.rvs(mean=mean, cov=cov, size=counts.loc[irow],
+                                              random_state=random_state)
             samples = np.atleast_2d(samples)
             result_row = pd.DataFrame(data=samples, columns=("rho0", "E/A"))
             for lbl in ("class", "label", "file"):
                 result_row[lbl] = row[lbl]
-            ret = pd.concat((ret, result_row))
+            ret.append(result_row)
+        ret = pd.concat(ret)
 
-        if num_points is not None:
-            ret = ret.sample(n=num_points, replace=len(ret) < num_points, random_state=random_state)
-
+        if len(ret) != num_points:
+            raise ValueError("Generate number of samples doesn't match requested number.")
         if df is not None:
             ret = pd.concat((df, ret))
         return ret
@@ -243,7 +229,7 @@ class NormDistDataSet(DataSet):
         for irow, row in self.get_data_frame(exclude=exclude).iterrows():
             mean, cov = NormDistDataSet.from_row_to_mean_cov(row)
             n_std = np.sqrt(-np.log(1.-level)*2)
-            if row["class"] in ("sv-min", "tov"):
+            if row["class"] == "reinhard":
                 use_color_palette = flatui[-2::-1]
                 facecolor = "none"
                 edgecolor = use_color_palette[irow]
@@ -265,106 +251,95 @@ class NormDistDataSet(DataSet):
 
 
 class KernelDensityEstimate(DataSet):
-    def __init__(self, filenames=None, set_specifier=None):
-        filenames, data = KernelDensityEstimate.get_data(filenames, set_specifier)
-        super().__init__(filenames=filenames)
+    def __init__(self, set_specifier=None):
+        filenames, data = self.get_data(set_specifier)
+        super().__init__(set_specifier=set_specifier, filenames=filenames)
         self.data_frame = data
-        self.set_specifier = set_specifier
 
     @staticmethod
-    def get_data(filenames, set_specifier):
-        use_filenames = bool(filenames)
-        use_specifier = bool(set_specifier)
-        if use_filenames == use_specifier:
-            raise ValueError("Need to specify either `filenames` or `set_specifier`")
-
-        if use_filenames:
-            files = filenames
-        else:
-            if set_specifier == "schunck":
-                files = glob.glob("data/Schunck/samples?.csv")
-            elif set_specifier == "giuliani":
-                output_folder = "data/giuliani"
-                relative_filepath = "PlotSamples/100k_theta.dat"
-                fullpath = f"{output_folder}/{relative_filepath}"
-                if not os.path.exists(fullpath):
-                    print("trying to download Giuliani et al.'s data file from the internet (may take a while)")
-                    url = 'https://figshare.com/ndownloader/files/37611122'
-                    compressed_file = wget.download(url, out=".")
-                    with py7zr.SevenZipFile(compressed_file, 'r') as archive:
-                        # allfiles = archive.getnames()
-                        archive.extract(targets=relative_filepath, path=output_folder)
-                files = [fullpath]
-            else:
-                raise ValueError(f"unknown `set_specifier` '{set_specifier}'")
-
-        data = pd.DataFrame()
-        if set_specifier == "giuliani":
-            delimiter = " "
-            column_names = ["unknown0", "kf", "E/A"] + [f"unknown{i}" for i in range(1, 5+1)]
-        else:
+    def get_data(set_specifier):
+        if set_specifier == "schunck":
+            files = glob.glob("data/Schunck/samples?.csv")
             delimiter = ","
             column_names = ["rho0", "E/A"]
+        elif set_specifier == "giuliani":
+            output_folder = "data/giuliani"
+            relative_filepath = "PlotSamples/100k_theta.dat"
+            fullpath = f"{output_folder}/{relative_filepath}"
+            if not os.path.exists(fullpath):
+                print("trying to download Giuliani et al.'s data file from the internet (may take a while)")
+                url = 'https://figshare.com/ndownloader/files/37611122'
+                compressed_file = wget.download(url, out=".")
+                with py7zr.SevenZipFile(compressed_file, 'r') as archive:
+                    # allfiles = archive.getnames()
+                    archive.extract(targets=relative_filepath, path=output_folder)
+            files = [fullpath]
+            delimiter = " "
+            column_names = ["unknown0", "kf", "E/A"] + [f"unknown{i}" for i in range(1, 5+1)]
+        elif set_specifier == "mcdonnell":
+            files = ["data/1000ParamsSkyrme.csv"]
+            delimiter = ","
+            column_names = ["rho0", "E/A"]
+        else:
+            raise ValueError(f"unknown `set_specifier` '{set_specifier}'")
 
+        def calc_density(kf, g=2):
+            return 2*g*kf**3/(6*np.pi**2)
+        data = []
         for file in sorted(files):
             data_read = pd.read_csv(file, comment="#", names=column_names, skiprows=0, delimiter=delimiter)
             data_read["file"] = file
             if set_specifier == "giuliani":
-                def calc_density(kf, g=2):
-                    return 2*g*kf**3/(6*np.pi**2)
                 data_read = pd.DataFrame(data={"rho0": calc_density(data_read["kf"]),
                                                "E/A": data_read["E/A"]})
                 id = 1
-            else:
+            elif set_specifier == "schunck":
                 id = int(re.search(r"samples(\d)", file).group(1))
+            elif set_specifier == "mcdonnell":
+                id = 1
+            else:
+                raise ValueError(f"unknown `set_specifier` '{set_specifier}'")
 
-            data_read["class"] = f"{set_specifier}:{id}"
+            data_read["class"] = set_specifier  # f"{set_specifier}:{id}"
             data_read["label"] = data_read["class"]
-            data = pd.concat([data, data_read])
+            data.append(data_read)
+        data = pd.concat(data)
         return files, data
 
-    def sample(self, df=None, num_points=1, num_distr="all", num_pts_per_distr=None,
-               replace=True, exclude=None, random_state=None, **kwargs):
-        class_lbl = self.data_frame["class"].unique()
-        if isinstance(num_distr, int):
-            class_lbl = np.random.choice(class_lbl, num_distr, replace=replace)
-        elif num_distr != "all":
-            raise ValueError(f"'num_distr' should be int or 'all', got '{num_distr}'.")
-        num_distr = len(class_lbl)
-        print(self.set_specifier, random_state)
-        if num_pts_per_distr is None:
-            num_pts_per_distr = int(np.max([1, num_points/num_distr]))
-
-        ret = pd.DataFrame()
-        dframe_filtered = self.get_data_frame(exclude=exclude)
-        for cls in class_lbl:
-            tmp = dframe_filtered[dframe_filtered["class"] == cls]
-            samples = tmp.sample(num_pts_per_distr, replace=replace, random_state=random_state)
-            # print(cls, samples)
+    def sample(self, df=None, num_points=1, replace=True, exclude=None, random_state=None):
+        data = self.get_data_frame(exclude=exclude)
+        class_lbl = pd.DataFrame(data["class"].unique(), columns=["class"])
+        counts = class_lbl.sample(num_points, replace=replace, random_state=random_state).index.value_counts()
+        # does not preserve order (we don't need to) but is much faster
+        ret = []
+        for irow, row in class_lbl.iterrows():
+            if irow not in counts.index:
+                continue
+            dframe_filtered = data[data["class"] == row["class"]]
+            samples = dframe_filtered.sample(counts.loc[irow], replace=replace, random_state=random_state)
             for lbl in ("class", "label"):
-                samples[lbl] = cls
-            ret = pd.concat((ret, samples))
+                samples[lbl] = row["class"]
+            ret.append(samples)
+        ret = pd.concat(ret)
 
-        if num_points is not None:
-            ret = ret.sample(n=num_points, replace=len(ret) < num_points, random_state=random_state)
-
+        if len(ret) != num_points:
+            raise ValueError("Generate number of samples doesn't match requested number.")
         if df is not None:
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, level=0.95, num_distr=1, fill=True, plot_scatter=False, marker_size=8,
+    def plot(self, ax=None, level=0.95, fill=True, plot_scatter=False, marker_size=8,
              add_legend=True, add_axis_labels=True, exclude=None, use_seaborn=False, **kwargs):
         if ax is None:
             ax = plt.gca()
 
         if "additional_legend_handles" not in kwargs.keys():
-            print("yeah")
             additional_legend_handles = []
         else:
             additional_legend_handles = kwargs["additional_legend_handles"]
 
         import matplotlib.patches as mpatches
-        for icls, cls in enumerate(self.data_frame["class"].unique()[:num_distr]):
+        for icls, cls in enumerate(self.data_frame["class"].unique()):
             dframe_filtered = self.get_data_frame(exclude=exclude)
             mask = dframe_filtered["class"] == cls
             if use_seaborn:
