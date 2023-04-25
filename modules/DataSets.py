@@ -81,7 +81,11 @@ class DataSet(ABC):
     @staticmethod
     def legend(ax, **kwargs):
         ax.legend(ncol=2, loc="upper left",  # title="empirical constraints",
-                  frameon=False, prop={'size': 6}, **kwargs)
+                  frameon=True, framealpha=1, edgecolor="0.8",
+                  prop={'size': 6},
+                  bbox_to_anchor=(-0.03, -0.15),  # bottom
+                  # bbox_to_anchor=(1.03, .7),  # right
+                  **kwargs)
 
 
 class GenericDataSet(DataSet):
