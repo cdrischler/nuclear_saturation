@@ -91,11 +91,11 @@ class DataSet(ABC):
         ax.set_title("Nuclear Saturation: Empirical Constraints")
 
     @staticmethod
-    def legend(ax, **kwargs):
-        ax.legend(ncol=2, loc="upper left",  # title="empirical constraints",
+    def legend(ax, ncol=2, out_of_frame=True, **kwargs):
+        ax.legend(ncol=ncol, loc="upper left",  # title="empirical constraints",
                   frameon=True, framealpha=1, edgecolor="0.8",
                   prop={'size': 6},
-                  bbox_to_anchor=(-0.03, -0.15),  # bottom
+                  bbox_to_anchor=(-0.03, -0.15) if out_of_frame else None,  # bottom
                   # bbox_to_anchor=(1.03, .7),  # right
                   **kwargs)
 
@@ -121,7 +121,7 @@ class GenericDataSet(DataSet):
 
     def plot(self, ax=None, plot_scatter=True, plot_box_estimate=False, marker_size=8,
              place_legend=True, add_axis_labels=True, exclude=None, zorder=-5,
-             facecolor='lightgray', edgecolor='gray', **kwargs):
+             facecolor='lightgray', edgecolor='gray', legend_out_of_frame=True, **kwargs):
         if ax is None:
             ax = plt.gca()
 
@@ -142,7 +142,7 @@ class GenericDataSet(DataSet):
         if add_axis_labels:
             super().set_axes_labels(ax)
         if place_legend:
-            super().legend(ax)
+            super().legend(ax, out_of_frame=legend_out_of_frame)
         super().set_axes_ranges(ax)
 
     def box_estimate(self, print_result=False, exclude=None):
