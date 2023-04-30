@@ -147,7 +147,7 @@ class SaturationAnalysis:
 
     def mc_iterate(self, scenario=None, num_realizations=1000000, num_pts_per_dft_model=1, sample_replace=True,
                    levels=None, quantities=None, prior_params=None, bins=120, debug=True,
-                   plot_fitted_conf_regions=True, plot_iter_results=False,
+                   plot_fitted_conf_regions=True, plot_iter_results=False, store_samples=True,
                    req_num_workers=10, num_batch_per_worker=1, num_samples_mu_Sigma=10):
         ct = time.perf_counter()
         # step 1: determine batch sizes
@@ -185,14 +185,15 @@ class SaturationAnalysis:
             levels = np.array((0.5, 0.8, 0.95, 0.99))
         levels = np.atleast_1d(levels)
         file_output = f"{self.pdf_output_path}/mc_output_{req_num_workers}_{scenario.label_plain}_"
-        file_output += f"{label_filename(prior_params['label'])}_{num_samples_mu_Sigma}_{num_realizations}.pdf"
-        fit = self.plot_samples(samples=samples, levels=levels, bins=bins,
+        file_output += f"{label_filename(prior_params['label'])}_num_postersamples_{num_samples_mu_Sigma}"
+        file_output += f"_num_mciter_{num_realizations}.pdf"
+        fit = self.plot_samples(samples=samples, levels=levels, bins=bins, store_samples=store_samples,
                                 prior_params=prior_params, plot_fitted_conf_regions=plot_fitted_conf_regions,
                                 add_info=None, debug=debug, file_output=file_output)
         return fit
 
     def plot_samples(self, samples, debug, levels, bins, prior_params,
-                     plot_fitted_conf_regions, file_output, add_info=None):
+                     plot_fitted_conf_regions, file_output, store_samples=True, add_info=None):
         use_level = 0.95
         names = ["predictive rho0", "predictive E/A"]
         labels = ['Sat. Density $n_0$ [fm$^{-3}$]', 'Sat. Energy $E_0/A$ [MeV]']
@@ -268,6 +269,12 @@ class SaturationAnalysis:
         print(f"Results written to '{file_output}'")
         print(fit)
         pdf.close()
+
+        # store samples if requested
+        if store_samples:
+            filename = file_output.replace("mc_output", "samples").replace(".pdf", ".h5")
+            samples.to_hdf(filename, key='samples', mode='w', complevel=6)
+            print(f"Samples written to '{filename}'.")
         return fit
 
 
