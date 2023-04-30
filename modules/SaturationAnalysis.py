@@ -160,8 +160,9 @@ class SaturationAnalysis:
 
         # step 2: create samples
         if plot_iter_results and num_realizations <= 20:
-            file_prefix = f"{self.pdf_output_path}/diagnostics_{scenario.label_plain}_{label_filename(prior_params['label'])}_"
-            file_prefix += f"{num_samples_mu_Sigma}_{num_realizations}"
+            file_prefix = f"{self.pdf_output_path}/diagnostics_"
+            file_prefix += f"{scenario.label_plain}_{label_filename(prior_params['label'])}_"
+            file_prefix += f"num_postersamples{num_samples_mu_Sigma}_num_mciter_{num_realizations}"
         else:
             file_prefix = None
         iter_func = partial(SaturationAnalysis.sample_mix_models_batch,
