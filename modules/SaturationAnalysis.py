@@ -95,9 +95,20 @@ class SaturationAnalysis:
     @staticmethod
     def sample_mix_models_batch(batch_size, num_pts_per_dft_model, sample_replace, scenario,
                                 quantities, prior_params, num_samples_mu_Sigma, file_prefix):
+        # step 0: init random number generator for parallel computing (pass job id along with batch_size)
+        # to ensure the results are reproducible (and not completely random)
+        global rng_global, worker_id, root_seed
+        if isinstance(batch_size, tuple):
+            ibatch, batch_size = batch_size
+            rng = np.random.default_rng([ibatch, root_seed])
+            # https://numpy.org/devdocs/reference/random/parallel.html#sequence-of-integer-seeds
+        else:
+            # if no job id is passed, then use the random number generator of the work,
+            # which will not lead to reproducible results
+            rng = rng_global
+
         # step 1: pre-store all (random) DFT realizations
         # print(f"\tGenerating {batch_size} DFT realizations", flush=True)
-        global rng, worker_id
         ct = time.perf_counter()
         dft_realizations = SaturationAnalysis.__sample_dft_realizations(
             num_realizations=batch_size,
@@ -106,7 +117,7 @@ class SaturationAnalysis:
             datasets=scenario.datasets,
             random_state=rng
         )
-        print(f"\tRequired time for generating all DFT realizations: {time.perf_counter()-ct:.6f} s", flush=True)
+        print(f"\tRequired time for generating all DFT realizations [{worker_id}]: {time.perf_counter()-ct:.6f} s", flush=True)
 
         # step 2: construct models for these realizations and sample from their posterior distributions
         ct = time.perf_counter()
@@ -114,7 +125,7 @@ class SaturationAnalysis:
                             num_samples_mu_Sigma=num_samples_mu_Sigma, random_state=rng, file_prefix=file_prefix)
         out = map(iter_func, enumerate(dft_realizations))
         samples = pd.concat(out)
-        print(f"\tRequired time for sampling {batch_size} mixture models: {time.perf_counter()-ct:.6f} s", flush=True)
+        print(f"\tRequired time for sampling {batch_size} mixture models [{worker_id}]: {time.perf_counter()-ct:.6f} s", flush=True)
         return samples
 
     @staticmethod
@@ -176,7 +187,7 @@ class SaturationAnalysis:
                             )
 
         with Pool(processes=num_workers, initializer=worker_init) as pool:
-            out = pool.map(iter_func, batch_sizes)  # , chunksize=1)
+            out = pool.map(iter_func, enumerate(batch_sizes, start=1))  # , chunksize=1)
         samples = pd.concat(out)
         print(f"\tRequired time for generating all {len(samples)} samples: {time.perf_counter()-ct:.6f} s", flush=True)
 
@@ -316,14 +327,15 @@ def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
     return fig, axs
 
 
-def worker_init():
-    global worker_id, rng
+def worker_init(status_msg=True):
+    global worker_id, rng_global, root_seed
     worker_id = os.getpid()
     name = current_process().name
     id = current_process()._identity
-    print(f"Worker {worker_id} {name} {id} initialized.", flush=True)
+    if status_msg:
+        print(f"Worker with pid {worker_id} [{name} {id}] initialized.", flush=True)
     root_seed = 0x8c3c010cb4754c905776bdac5ee7501
-    rng = np.random.default_rng([worker_id, root_seed])
+    rng_global = np.random.default_rng([worker_id, root_seed])
     # https://numpy.org/devdocs/reference/random/parallel.html#sequence-of-integer-seeds
 
 #%%
