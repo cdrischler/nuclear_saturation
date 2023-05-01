@@ -328,8 +328,8 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
             err_ellipse = (dev > ellipse_tol)
             if err_radius or err_ellipse:
                 print(err_ellipse, err_radius)
-                print(dev, ellipse_tol, np.abs(est_conf-alpha), radius_tol)
-                raise ValueError(f"Obtained confidence region not consistent. Estimated alpha={est_conf:.4f} (expected: {alpha:.4f})")
+                print(dev, ellipse_tol, np.abs(est_conf-alpha[ir0i]), radius_tol)
+                raise ValueError(f"Obtained confidence region not consistent. Estimated alpha={est_conf:.4f} (expected: {alpha[ir0i]:.4f})")
             else:
                 print(f"confidence ellipse at level '{alpha[ir0i]}' validated.")
     return ax
