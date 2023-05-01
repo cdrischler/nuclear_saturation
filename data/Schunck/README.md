@@ -1,10 +1,7 @@
 # README
 
-## Results from Schunck et al.
 
-Mike redid the analysis of the 2015 paper with better actual data. This was
-published in J. Phys. G 47, 074001 (2020),
-https://doi.org/10.1088/1361-6471/ab8745.
+Mike Grosskopf et al. redid the analysis of the 2015 paper by McDonnell et al. with better data. This was published in [J. Phys. G 47, 074001 (2020)](https://doi.org/10.1088/1361-6471/ab8745).
 
 Communication with Mike in May/June 2022:
 
