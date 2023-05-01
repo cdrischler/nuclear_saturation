@@ -119,7 +119,7 @@ class GenericDataSet(DataSet):
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, plot_scatter=True, plot_box_estimate=False, marker_size=8,
+    def plot(self, ax=None, plot_scatter=True, plot_box_estimate=False, marker_size=24,
              place_legend=True, add_axis_labels=True, exclude=None, zorder=-5,
              facecolor='lightgray', edgecolor='gray', legend_out_of_frame=True, **kwargs):
         if ax is None:
