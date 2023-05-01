@@ -10,7 +10,7 @@ from modules.plot_helpers import cm
 
 class EftPredictions:
     def __init__(self, filename=None, show_result=False):
-        filename = filename if filename else "data/satpoint_predicted.csv"
+        filename = filename if filename else "data/satpoints_predicted.csv"
         self.data = self.read_data(filename)
         self.model, self.trace = self.fit(show_result=show_result)
         self.x_validate = np.linspace(0.14, 0.20, 10)

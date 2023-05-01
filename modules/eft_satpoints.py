@@ -46,7 +46,7 @@ def plot_coester_band(ax, data_sat, color="lightgray", shift=1.6):
 
 def make_coester_plot(ax, emp_constraint=None, conf_level=None):
     # read Drischler et al. results
-    data_sat = pd.read_csv("data/satpoint_predicted.csv", skiprows=0, sep=',', header=0)
+    data_sat = pd.read_csv("data/satpoints_predicted.csv", comment="#", skiprows=0, sep=',', header=0)
 
     # set rc params
     import matplotlib as mpl
