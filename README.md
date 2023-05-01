@@ -1,6 +1,11 @@
-# Nuclear saturation point
+# Bayesian analysis of the nuclear saturation point
 
-We use Bayesian model mixing to quantify the uncertainties in the empirical nuclear saturation point of symmetric matter. We also quantity how well recent microscopic calculations reproduce the empirical point.
+We follow a Bayesian approach with conjugate distributions to extract the empirical saturation point from a range of Density Functional Theory (DFT) constraints, including those from relativistic mean field (RMF) theory and Skyrme energy density functionals. 
+
+This repository supplements our manuscript in preparation.
+
+We aim to provide statistically meaningful constraints on the nuclear saturation point to benchmark (and guide the construction of novel) microscopic interaction derived from chiral effective field theory (EFT).
+
 
 ## Installation
 
@@ -12,32 +17,53 @@ python3 -m ipykernel install --name "satpoint"
 jupyter-notebook&
 # deactivate # when the job is done
 ```
-You may need to set the environment variable `export HDF5_DIR=/opt/homebrew/Cellar/hdf5/1.12.2_2`.
+You may need to specify the HDF5 directory, e.g., using the environment variable 
+```shell
+export HDF5_DIR=/opt/homebrew/Cellar/hdf5/1.12.2_2  # the location may be different
+```
 
-## References
 
-### Relevant for the data sets we use
+## Overview
+
+The repository is organized as follows:
+* `data`: contains all DFT and EFT data files, including author and other relevant information
+* `modules`: contains classes, functions, and more relevant to our analysis. It also provides a function to calculate and plot confidence regions of the bivariate t-distribution analytically. See the Appendices in our manuscript for more details.
+
+The following Jupyter notebooks are included:
+* `analysis_conjugate_priors.ipynb`: performs the conjugate prior analysis presented in the manuscript. The notebook supports parallel computing.
+* `test_plot_conf_regions.ipynb`: provides a tutorial on plotting confidence regions of the t-distribution using the tools developed
+* `saturation_analysis_mc.ipynb`: offers a (supplementary) brute-force approach to analyzing the nuclear saturation point without assuming conjugate priors. Another virtual environment with packages specified in `requirements_mc.txt` needs to be installed following the instructions above. This notebook was not used in our manuscript.
+  
+
+## Cite this work
+
+```bibtex
+@manual{saturationGitHub,
+  author = {Christian Drischler},
+  title = "{{Supplemental source code on GitHub}}",
+  year = "2023",
+  note = {\url{https://github.com/cdrischler/nuclear_saturation}},
+  url = {\mbox{https://github.com/cdrischler/nuclear_saturation}}
+}
+```
+
+
+## External (helpful) links
+
+The following external resources may be helpful:
+
+* [Murphy's notes](https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf) on conjugate priors
+* Lattimer's talk at the [INT 2022][LattimerINT:2022] (see slide 10)
+* [Insights into nuclear saturation density from parity violating electron scattering][Horowitz:2020]
+* [From finite nuclei to the nuclear liquid drop: Leptodermous expansion based on self-consistent mean-field theory][Reinhard:2005]
+* [Nuclear charge and neutron radii and nuclear matter: trend analysis][Reinhard:2016]
 * [Bayesian analysis][McDonnell:2015] of Skyrme functionals, which was updated [here][Schunck:2020].
 * [Empirical saturation box][Drischler:2016] (see Section IV.B) used in microscopic calculations based on:
   * Table VII in [Dutra et al. (2012)][Dutra:2012]
   * Table I in [Brown & Schwenk][Brown:2013]
   * Table IV in [Kortelainen et al.][Kortelainen:2014]
-* Analysis of RMF models by [Dutra et al. (2014)][Dutra:2014] could be used here as well.
+* Analysis of RMF models by [Dutra et al. (2014)][Dutra:2014]
 
-### Additional
-* Lattimer's talk at the [INT 2022][LattimerINT:2022] (see slide 10)
-* [Insights into nuclear saturation density from parity violating electron scattering][Horowitz:2020]
-* [From finite nuclei to the nuclear liquid drop: Leptodermous expansion based on self-consistent mean-field theory][Reinhard:2005]
-* [Nuclear charge and neutron radii and nuclear matter: trend analysis][Reinhard:2016]
-
-
-### Misc
-* [Murphy's notes](https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf) on conjugate priors
-
-
-### Bayesian analysis
-* https://arxiv.org/pdf/1408.4050.pdf
-* https://onlinelibrary.wiley.com/doi/pdfdirect/10.1111/oik.05985?casa_token=jGGeFeawTd0AAAAA:a07xpNlzHR0iWdAycmpda4YOC617z1783_BFd9HEK9mqjRlSqJ8uKd54k7OGYPWyYgzEuDL1tY-H-5FH
 
 [McDonnell:2015]:https://arxiv.org/abs/1501.03572
 [Schunck:2020]:https://arxiv.org/abs/2003.12207
