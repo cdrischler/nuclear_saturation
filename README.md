@@ -1,6 +1,6 @@
-# Bayesian analysis of the nuclear saturation point
+# Bayesian analysis of the empirical nuclear saturation point
 
-We follow a Bayesian approach with conjugate distributions to extract the empirical saturation point from a range of Density Functional Theory (DFT) constraints, including those from relativistic mean field (RMF) theory and Skyrme energy density functionals. 
+We follow a Bayesian approach with conjugate distributions to extract the *empirical* saturation point from a range of Density Functional Theory (DFT) constraints, including those from relativistic mean field (RMF) theory and Skyrme energy density functionals. 
 
 This repository supplements our manuscript in preparation.
 
@@ -32,7 +32,7 @@ The repository is organized as follows:
 The following Jupyter notebooks are included:
 * `analysis_conjugate_priors.ipynb`: performs the conjugate prior analysis presented in the manuscript. The notebook supports parallel computing.
 * `test_plot_conf_regions.ipynb`: provides a tutorial on plotting confidence regions of the t-distribution using the tools developed
-* `saturation_analysis_mc.ipynb`: offers a (supplementary) brute-force approach to analyzing the nuclear saturation point without assuming conjugate priors. Another virtual environment with packages specified in `requirements_mc.txt` needs to be installed following the instructions above. This notebook was not used in our manuscript.
+* `saturation_analysis_mc.ipynb`: provides an independent implementation of our saturation analysis using brute-force Monte Carlo sampling. It can be used to check and generalize our analysis using conjugate priors. Another virtual environment with packages specified in `requirements_mc.txt` needs to be installed following the instructions above. This notebook was not used in our manuscript.
   
 
 ## Cite this work
