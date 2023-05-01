@@ -31,7 +31,7 @@ The repository is organized as follows:
 
 The following Jupyter notebooks are included:
 * `analysis_conjugate_priors.ipynb`: performs the conjugate prior analysis presented in the manuscript. The notebook supports parallel computing.
-* `test_plot_conf_regions.ipynb`: provides a tutorial on plotting confidence regions of the t-distribution using the tools developed
+* `tutorial_conf_regions.ipynb`: provides a tutorial on plotting confidence regions of the t-distribution using the tools developed
 * `saturation_analysis_mc.ipynb`: provides an independent implementation of our saturation analysis using brute-force Monte Carlo sampling. It can be used to check and generalize our analysis using conjugate priors. Another virtual environment with packages specified in `requirements_mc.txt` needs to be installed following the instructions above. This notebook was not used in our manuscript.
   
 
