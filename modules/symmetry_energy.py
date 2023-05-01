@@ -10,7 +10,7 @@ avail_srcs = []
 
 
 # Hebeler et al.
-data_H = pd.read_csv("./data/Sv_L/H.csv", names=['Esym', 'L'])
+data_H = pd.read_csv("./data/Sv_L/H.csv", names=['Esym', 'L'], comment="#")
 avail_srcs.append({
     "label" : "H", "facecolor" : purple, 'Esym': data_H['Esym'], 'L': data_H['L'],
     'label_x': 0.42, 'label_y': 0.34, 'ha': 'left', 'va': 'bottom', 'label_color': 'k',
@@ -20,7 +20,7 @@ avail_srcs.append({
 })
 
 # Gandolfi et al.
-data_G = pd.read_csv("./data/Sv_L/G.csv", names=['Esym', 'L'])
+data_G = pd.read_csv("./data/Sv_L/G.csv", names=['Esym', 'L'], comment="#")
 avail_srcs.append({
     "label" : "G", "facecolor" : grey, 'Esym': data_G['Esym'], 'L': data_G['L'],
     'label_x': 0.55, 'label_y': 0.39, 'ha': 'left', 'va': 'bottom', 'label_color': 'k',

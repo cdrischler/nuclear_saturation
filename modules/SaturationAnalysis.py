@@ -189,7 +189,7 @@ class SaturationAnalysis:
         with Pool(processes=num_workers, initializer=worker_init) as pool:
             out = pool.map(iter_func, enumerate(batch_sizes, start=1))  # , chunksize=1)
         samples = pd.concat(out)
-        print(f"\tRequired time for generating all {len(samples)} samples: {time.perf_counter()-ct:.6f} s", flush=True)
+        print(f"Required time for generating all {len(samples)} posterior samples: {time.perf_counter()-ct:.6f} s", flush=True)
 
         # step 3: plot samples
         if levels is None:
