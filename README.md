@@ -1,4 +1,4 @@
-# Bayesian analysis of the empirical nuclear saturation point
+# Bayesian analysis of the empirical saturation point
 
 We follow a Bayesian approach with conjugate distributions to extract the *empirical* saturation point from a range of Density Functional Theory (DFT) constraints, including those from relativistic mean field (RMF) theory and Skyrme energy density functionals. 
 
