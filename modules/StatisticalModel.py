@@ -491,4 +491,36 @@ class StatisticalModel:
         ax.set_xlabel(self.xlabel)
         ax.set_ylabel(self.ylabel)
 
+
+def latex_it(posterior, sep = "-"*50, title=None):
+    ps = posterior
+    print(sep)
+    if title is not None:
+        print(title)
+    if np.all([elem in ps.keys() for elem in ("mu", "Psi", "nu", "kappa")]):
+        # NIW prior or posterior
+        if "label" in ps.keys():
+            print(ps["label"])
+        print(f"(\\kappa_n = {ps['kappa']}, \\nu_n = {ps['nu']})")
+        print(f"{ps['mu'][0]:.3f} \\\\ {ps['mu'][1]:.2f}")
+        offdiag =  np.sqrt(np.abs(ps['Psi'][0,1])) * np.sign(ps['Psi'][0,1])
+        print(f"{np.sqrt(ps['Psi'][0,0]):.3f}^2 & {offdiag:.3f}^2 \\\\ {offdiag:.3f}^2 & {np.sqrt(ps['Psi'][1,1]):.2f}^2")
+    elif np.all([elem in ps.keys() for elem in ("mu", "Psi", "df")]):
+        # fit
+        print(f"(\\nu_n = {ps['df']:.0f})")
+        print(f"{ps['mu'][0]:.3f} \\\\ {ps['mu'][1]:.2f}")
+        offdiag =  np.sqrt(np.abs(ps['Psi'][0,1])) * np.sign(ps['Psi'][0,1])
+        print(f"{np.sqrt(ps['Psi'][0,0]):.3f}^2 & {offdiag:.3f}^2 \\\\ {offdiag:.3f}^2 & {np.sqrt(ps['Psi'][1,1]):.2f}^2")
+    elif np.all([elem in ps.keys() for elem in ("mu", "Psi", "nu")]):
+        # posterior predictive
+        print(f"(\\nu_n = {ps['nu']:.0f})")
+        print(f"{ps['mu'][0]:.3f} \\\\ {ps['mu'][1]:.2f}")
+        offdiag =  np.sqrt(np.abs(ps['Psi'][0,1])) * np.sign(ps['Psi'][0,1])
+        print(f"{np.sqrt(ps['Psi'][0,0]):.3f}^2 & {offdiag:.3f}^2 \\\\ {offdiag:.3f}^2 & {np.sqrt(ps['Psi'][1,1]):.2f}^2")
+    else:
+        print("unknown input: nothing to be done")
+    print(sep)
+# latex_it(model.posterior_params)
+# latex_it(fit)
+
 #%%
