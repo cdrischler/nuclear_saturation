@@ -132,7 +132,7 @@ def make_coester_plot(ax, emp_constraint=None, conf_level=None):
 
     # axes labels
     ax.set_xlabel("Sat. Density $n_0$ [fm$^{-3}$]")
-    ax.set_ylabel("Sat. Energy $E_0/A$ [MeV]")
+    ax.set_ylabel("Sat. Energy $E_0$ [MeV]")
 
     ax.minorticks_on()
     ax.tick_params(which='both', direction='in',

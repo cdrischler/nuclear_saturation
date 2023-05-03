@@ -448,7 +448,7 @@ class StatisticalModel:
             quantiles = [quantitles, 0.5, 1-quantitles]
 
             corner.corner(data=data,  # var_names=names,
-                          labels=("$n_0$", "$E_0/A$"),
+                          labels=("$n_0$", "$E_0$"),
                           quantiles=quantiles,
                           show_titles=False,   # BUG in `corner.py`, see below
                           title_quantiles=None,
@@ -484,7 +484,7 @@ class StatisticalModel:
 
     @property
     def ylabel(self):
-        return 'Sat. Energy $E_0/A$ [MeV]'
+        return 'Sat. Energy $E_0$ [MeV]'
 
     def set_xy_lbls(self, ax):
         ax.set_xlabel(self.xlabel)

@@ -318,7 +318,7 @@ def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
         ax.set_xlabel('Sat. Density $n_0$ [fm$^{-3}$]')
 
         if iprior_params == 0:
-            ax.set_ylabel('Sat. Energy $E_0/A$ [MeV]')
+            ax.set_ylabel('Sat. Energy $E_0$ [MeV]')
         else:
             ax.set_yticklabels([])
 
