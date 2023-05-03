@@ -121,7 +121,7 @@ class GenericDataSet(DataSet):
         return ret
 
     def plot(self, ax=None, plot_scatter=True, plot_box_estimate=False, marker_size=24,
-             place_legend=True, add_axis_labels=True, exclude=None, zorder=-5,
+             place_legend=True, add_axis_labels=True, exclude=None, zorder=-5, annotate=False,
              facecolor='lightgray', edgecolor='gray', legend_out_of_frame=True, **kwargs):
         if ax is None:
             ax = plt.gca()
@@ -134,16 +134,33 @@ class GenericDataSet(DataSet):
                            alpha=0.4, zorder=zorder, **kwargs)
 
         if plot_scatter:
+            from modules.plot_helpers import mpt_default_colors  # use matplotlib default colors
             dframe = self.get_data_frame(exclude=exclude)
-            for clbls in dframe["class"].unique():
+            for iclbls, clbls in enumerate(dframe["class"].unique()):
+                color = mpt_default_colors[iclbls] if annotate else None
                 idxs = np.where(dframe["class"] == clbls)
                 ax.scatter(dframe.iloc[idxs]["rho0"], dframe.iloc[idxs]["E/A"],
-                           zorder=100, edgecolor="k", lw=0.5,  #color="k",
+                           zorder=100, edgecolor="k", lw=0.5, color=color,
                            s=marker_size, label=self.humanize_class_labels(clbls))
+                if annotate:
+                    for index, row in (dframe.iloc[idxs].sort_values(by="E/A")).iterrows():
+                        # ax.text(x=row["rho0"]*0+0.15, y=row["E/A"], s=row["label"], fontsize=6, color=color)
+                        alpha1s = 0.6
+                        bbox_dict = dict(boxstyle="round,pad=0.5", fc=color, alpha=alpha1s, ec="none", lw=1)
+                        ax.annotate(row["label"].replace("-", "--"),
+                            xy=(row["rho0"], row["E/A"]),
+                            xytext=(0.15, -15.6-index*0.06), textcoords='data',
+                            arrowprops={'arrowstyle':'-','color':color, 'alpha':alpha1s,'relpos':(1., 0.5),
+                                        'shrinkA':5, 'shrinkB':5, 'patchA':None, 'patchB':None,
+                                        'connectionstyle':"angle3,angleA=-11,angleB=100"},
+                            horizontalalignment='left', verticalalignment='bottom',
+                            rotation=0, size=5, zorder=1, bbox=bbox_dict)
+                
+
         if add_axis_labels:
-            super().set_axes_labels(ax)
+            super().set_axes_labels(ax, set_title=False)
         if place_legend:
-            super().legend(ax, out_of_frame=legend_out_of_frame)
+            super().legend(ax, ncol=1, loc="lower right", out_of_frame=legend_out_of_frame)
         super().set_axes_ranges(ax)
 
     def box_estimate(self, print_result=False, exclude=None):
