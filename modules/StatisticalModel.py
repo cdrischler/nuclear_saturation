@@ -373,6 +373,7 @@ class StatisticalModel:
                     title_fmt = ".2f"
 
                 diag.axes.get_yaxis().set_visible(False)
+                diag.set_ylim(bottom=0, top=0.5)
 
                 diag.plot(x, y, c="k", ls='-', lw=2, alpha=1, label='t pdf')
 
