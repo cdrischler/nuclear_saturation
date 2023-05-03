@@ -266,5 +266,24 @@ def make_sv_l_plot(ax):
         rotation=0, transform=ax.transAxes,
         fontsize=annotate_fs
     )
+    
+    # plots constraints of this work (see BUQEYE Jupyter notebook)
+    # Lambda = 500 MeV
+    mean = np.array([32.39271556, 54.93037164])
+    cov = np.array([[ 1.15118411,  8.29158404],
+       [ 8.29158404, 64.92187809]])
+    confidence_ellipse_mean_cov(
+        mean, cov, ax=ax, n_std=2,
+        facecolor="r", edgecolor='k', alpha=alpha2s, zorder=i+1
+    )
+
+    # Lambda = 450 MeV
+    mean = np.array([33.5111994 , 60.99789384])
+    cov = np.array([[ 0.93643079,  6.57296244],
+       [ 6.57296244, 51.95419266]])
+    confidence_ellipse_mean_cov(
+        mean, cov, ax=ax, n_std=2,
+        facecolor="r", edgecolor='k', alpha=alpha2s, zorder=i+1
+    )
 
 #%%
