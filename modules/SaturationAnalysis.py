@@ -117,7 +117,7 @@ class SaturationAnalysis:
             datasets=scenario.datasets,
             random_state=rng
         )
-        print(f"\tRequired time for generating all DFT realizations [{worker_id}]: {time.perf_counter()-ct:.6f} s", flush=True)
+        print(f"Required time for generating all DFT realizations [{worker_id}]: {time.perf_counter()-ct:.6f} s", flush=True)
 
         # step 2: construct models for these realizations and sample from their posterior distributions
         ct = time.perf_counter()
@@ -125,7 +125,7 @@ class SaturationAnalysis:
                             num_samples_mu_Sigma=num_samples_mu_Sigma, random_state=rng, file_prefix=file_prefix)
         out = map(iter_func, enumerate(dft_realizations))
         samples = pd.concat(out)
-        print(f"\tRequired time for sampling {batch_size} mixture models [{worker_id}]: {time.perf_counter()-ct:.6f} s", flush=True)
+        print(f"Required time for sampling {batch_size} mixture models [{worker_id}]: {time.perf_counter()-ct:.6f} s", flush=True)
         return samples
 
     @staticmethod
