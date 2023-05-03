@@ -5,7 +5,7 @@ standard_prior_off_diag = 0.  # note that "Psi" should be a symmetric, pos. def 
 standard_prior_params = {"mu": np.array([0.16, -15.9]),
                          "Psi": np.array([[0.01**2, standard_prior_off_diag],
                                           [standard_prior_off_diag, 0.32**2]]),
-                         "kappa": 1, "nu": 10, "label": "Standard Prior"}
+                         "kappa": 1, "nu": 10, "label": "Extra Set"}
 
 setA_prior_params = {"mu": np.array([0.160, -16.0]),
                      "Psi": 0.6*np.array([[0.004**2, standard_prior_off_diag],
