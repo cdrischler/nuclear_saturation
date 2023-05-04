@@ -157,7 +157,7 @@ class SaturationAnalysis:
         return pd.DataFrame(data={"predictive rho0": tmp[:, 0], "predictive E/A": tmp[:, 1]})
 
     def mc_iterate(self, scenario=None, num_realizations=1000000, num_pts_per_dft_model=1, sample_replace=True,
-                   levels=None, quantities=None, prior_params=None, bins=120, debug=True,
+                   levels=None, quantities=None, prior_params=None, bins=120, debug=True, pdf=None,
                    plot_fitted_conf_regions=True, plot_iter_results=False, store_samples=True,
                    req_num_workers=10, num_batch_per_worker=1, num_samples_mu_Sigma=10):
         ct = time.perf_counter()
@@ -200,11 +200,11 @@ class SaturationAnalysis:
         file_output += f"_num_mciter_{num_realizations}.pdf"
         fit = self.plot_samples(samples=samples, levels=levels, bins=bins, store_samples=store_samples,
                                 prior_params=prior_params, plot_fitted_conf_regions=plot_fitted_conf_regions,
-                                add_info=None, debug=debug, file_output=file_output)
+                                add_info=None, debug=debug, pdf=pdf, file_output=file_output)
         return fit
 
-    def plot_samples(self, samples, debug, levels, bins, prior_params,
-                     plot_fitted_conf_regions, file_output, store_samples=True, add_info=None):
+    def plot_samples(self, samples, debug, levels, bins, prior_params, plot_fitted_conf_regions, 
+                     file_output, store_samples=True, add_info=None, pdf=None):
         use_level = 0.95
         names = ["predictive rho0", "predictive E/A"]
         labels = ['Sat. Density $n_0$ [fm$^{-3}$]', 'Sat. Energy $E_0/A$ [MeV]']
