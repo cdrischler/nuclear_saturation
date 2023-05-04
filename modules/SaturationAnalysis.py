@@ -269,24 +269,65 @@ class SaturationAnalysis:
 
         if plot_fitted_conf_regions:
             from plot_helpers import plot_confregion_bivariate_t
-            plot_confregion_bivariate_t(fit["mu"], fit["Psi"], fit["df"],
+            plot_confregion_bivariate_t(fit["mu"], fit["Psi"], fit["nu"],
                                         ax=axs[1, 0], alpha=levels, alpha_unit="decimal", num_pts=10000000,
                                         plot_scatter=False, validate=False, zorder=100)  # linestyle=":"
             axs[1, 0].legend(ncol=2, title="confidence level (fit)", prop={'size': 6}, frameon=False)
 
-        pdf = matplotlib.backends.backend_pdf.PdfPages(file_output)
+        pdf_not_provided = type(pdf) != matplotlib.backends.backend_pdf.PdfPages
+        if pdf_not_provided:
+            pdf = matplotlib.backends.backend_pdf.PdfPages(file_output)
+            print(f"Writing results to '{file_output}'")
         pdf.savefig(fig)
         plt.close(fig=fig)
-        print(f"Results written to '{file_output}'")
         print(fit)
-        pdf.close()
+        if pdf_not_provided:
+            pdf.close()
 
         # store samples if requested
         if store_samples:
-            filename = file_output.replace("mc_output", "samples").replace(".pdf", ".h5")
+            if pdf_not_provided:
+                filename = file_output
+            else:
+                filename = pdf._file.fh.name
+            filename = filename.replace("mc_output", "samples").replace(".pdf", ".h5")
             samples.to_hdf(filename, key='samples', mode='w', complevel=6)
             print(f"Samples written to '{filename}'.")
         return fit
+
+    @staticmethod
+    def _get_mc_output_filename(kwargs):
+        filename = f"pdf/mc_{kwargs['scenario'].label}_num_postersamples_{kwargs['num_samples_mu_Sigma']}_"
+        filename += f"num_mciter_{kwargs['num_realizations']}_numworkers_{kwargs['req_num_workers']}.pdf"
+        return filename
+
+    def mc_run_scenario(self, scenario, used_prior_sets, results=None, **input_kwargs):
+        dflt_kwargs = dict(
+            scenario=scenario,
+            num_realizations=1,
+            num_pts_per_dft_model=1,
+            num_samples_mu_Sigma=100000,
+            req_num_workers=10,
+            sample_replace=True,
+            plot_iter_results=False,
+            debug=False,
+            plot_fitted_conf_regions=True,
+            store_samples=True
+        )
+        kwargs = {**dflt_kwargs, **input_kwargs}
+        print("Using the following configuration:")
+        for key, val in kwargs.items():
+            print(f"{key}: {val}")
+        filename=self._get_mc_output_filename(kwargs)
+        # print(f"writing to '{filename}'")
+        pdf = matplotlib.backends.backend_pdf.PdfPages(filename=filename)
+        from StatisticalModel import latex_it
+        for prior_set in used_prior_sets:
+            fit = self.mc_iterate(pdf=pdf, prior_params=prior_set, **kwargs)
+            if isinstance(results, dict): 
+                results[prior_set["label"]][scenario.label] = fit
+            latex_it(fit, title=f"fit predictive params: {prior_set['label']}")
+        pdf.close()
 
 
 def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
