@@ -259,7 +259,7 @@ class SaturationAnalysis:
         for row in axs[:, 0]:
             row.set_xlim(0.145, 0.175)
 
-        axs[1, 0].set_ylim(-16.5, -14.7)  # not that the axes are different
+        axs[1, 0].set_ylim(-16.5, -14.7)  # note that the axes are different
         axs[1, 1].set_xlim(-16.5, -14.7)
 
         # fit bivariate t distribution to samples; only accurate for large numbers of sampling points
