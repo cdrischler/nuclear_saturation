@@ -491,10 +491,17 @@ class StatisticalModel:
         ax.set_xlabel(self.xlabel)
         ax.set_ylabel(self.ylabel)
 
+    def print_latex(self):
+        latex_it(self.posterior_params, print_sep_bottom=True,
+                 title=f"posterior params: {self.prior_params['label']}")
+        latex_it(self.predictives_params(return_dict=True), print_sep_top=False,
+                 title=f"posterior predictive params: {self.prior_params['label']}")
 
-def latex_it(posterior, sep = "-"*50, title=None):
+def latex_it(posterior, sep = "-"*50, title=None, 
+             print_sep_top=True, print_sep_bottom=True):
     ps = posterior
-    print(sep)
+    if print_sep_top : 
+        print(sep)
     if title is not None:
         print(title)
     if np.all([elem in ps.keys() for elem in ("mu", "Psi", "nu", "kappa")]):
@@ -505,21 +512,16 @@ def latex_it(posterior, sep = "-"*50, title=None):
         print(f"{ps['mu'][0]:.3f} \\\\ {ps['mu'][1]:.2f}")
         offdiag =  np.sqrt(np.abs(ps['Psi'][0,1])) * np.sign(ps['Psi'][0,1])
         print(f"{np.sqrt(ps['Psi'][0,0]):.3f}^2 & {offdiag:.3f}^2 \\\\ {offdiag:.3f}^2 & {np.sqrt(ps['Psi'][1,1]):.2f}^2")
-    elif np.all([elem in ps.keys() for elem in ("mu", "Psi", "df")]):
-        # fit
-        print(f"(\\nu_n = {ps['df']:.0f})")
-        print(f"{ps['mu'][0]:.3f} \\\\ {ps['mu'][1]:.2f}")
-        offdiag =  np.sqrt(np.abs(ps['Psi'][0,1])) * np.sign(ps['Psi'][0,1])
-        print(f"{np.sqrt(ps['Psi'][0,0]):.3f}^2 & {offdiag:.3f}^2 \\\\ {offdiag:.3f}^2 & {np.sqrt(ps['Psi'][1,1]):.2f}^2")
     elif np.all([elem in ps.keys() for elem in ("mu", "Psi", "nu")]):
-        # posterior predictive
+        # posterior predictive and fit
         print(f"(\\nu_n = {ps['nu']:.0f})")
         print(f"{ps['mu'][0]:.3f} \\\\ {ps['mu'][1]:.2f}")
         offdiag =  np.sqrt(np.abs(ps['Psi'][0,1])) * np.sign(ps['Psi'][0,1])
         print(f"{np.sqrt(ps['Psi'][0,0]):.3f}^2 & {offdiag:.3f}^2 \\\\ {offdiag:.3f}^2 & {np.sqrt(ps['Psi'][1,1]):.2f}^2")
     else:
         print("unknown input: nothing to be done")
-    print(sep)
+    if print_sep_bottom : 
+        print(sep)
 # latex_it(model.posterior_params)
 # latex_it(fit)
 

@@ -424,7 +424,7 @@ def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status
         print("assuming Normal distribution instead")
         nu_est = np.inf
         Psi_est = cov_est
-    return {"mu": mu_est, "Psi": Psi_est, "df": np.rint(nu_est)}
+    return {"mu": mu_est, "Psi": Psi_est, "nu": int(np.rint(nu_est))}
 
 
 def test_fit_bivariate_t(df=7, M=None, mu=None, size=10000000, tol=1e-3, print_status=True):
@@ -446,11 +446,11 @@ def test_fit_bivariate_t(df=7, M=None, mu=None, size=10000000, tol=1e-3, print_s
         from scipy.stats import multivariate_normal
         data = multivariate_normal.rvs(mean=mu, cov=M, size=size)
 
-    mu_est, psi_est, nu_est = fit_bivariate_t(data, nu_limits=nu_limits, print_status=print_status)
+    fit = fit_bivariate_t(data, nu_limits=nu_limits, print_status=print_status)
 
-    stat_mu = np.abs(mu-mu_est) < tol
-    stat_psi = np.abs(M-psi_est) < tol
-    stat_nu = np.abs(df-nu_est) < tol if not is_normal_distr else True
+    stat_mu = np.abs(mu-fit["mu"]) < tol
+    stat_psi = np.abs(M-fit["Psi"]) < tol
+    stat_nu = np.abs(df-fit["nu"]) < tol if not is_normal_distr else True
     return np.any(stat_mu) and np.any(stat_psi) and stat_nu
 # test_fit_bivariate_t()
 
