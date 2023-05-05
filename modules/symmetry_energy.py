@@ -262,10 +262,18 @@ def make_sv_l_plot(ax, prior_set_lbl=None, data_set_lbl=None):
             facecolor=lighten_color("k", 1/n_std), edgecolor='k', alpha=0.66, zorder=0
         )
     ax.text(
-        0.55, 0.2, "PREX--II informed ($3\sigma$)", fontdict=dict(color="k"),
+        0.52, 0.2, "Reed $\\textit{et~al.}$\nPREX--II informed", fontdict=dict(color="k"),
         rotation=0, transform=ax.transAxes,
-        fontsize=annotate_fs
+        fontsize=annotate_fs+1
     )
+
+    reed_lbl_pos = {1: 0.86, 2: 0.45, 3: 0.1}
+    for nsig in range(1,4):
+        ax.text(
+            0.92, reed_lbl_pos[nsig], f"${nsig}\sigma$", fontdict=dict(color="w"),
+            rotation=0, transform=ax.transAxes,
+            fontsize=annotate_fs+4
+        )
     
     # plots constraints of this work (see BUQEYE Jupyter notebook)
     # Lambda = 500 MeV
