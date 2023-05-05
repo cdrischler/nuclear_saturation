@@ -326,7 +326,7 @@ class SaturationAnalysis:
         from StatisticalModel import latex_it
         for prior_set in used_prior_sets:
             fit = self.mc_iterate(pdf=pdf, prior_params=prior_set, **kwargs)
-            fit["config"] = kwargs
+            # fit["config"] = kwargs
             if isinstance(results, dict): 
                 results[prior_set["label"]][scenario.label] = fit
             latex_it(fit, title=f"fit predictive params: {prior_set['label']}")
