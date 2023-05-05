@@ -131,6 +131,7 @@ dmypy.json
 
 # additional
 **/pdf
+**samples/
 *.pdf
 *.png
 **/.DS_Store
