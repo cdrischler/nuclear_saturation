@@ -346,7 +346,7 @@ class KernelDensityEstimate(DataSet):
             ret = pd.concat((df, ret))
         return ret
 
-    def plot(self, ax=None, level=0.95, fill=True, plot_scatter=False, marker_size=8,
+    def plot(self, ax=None, level=0.95, fill=False, plot_scatter=False, marker_size=8,
              add_legend=True, add_axis_labels=True, exclude=None, use_seaborn=False, **kwargs):
         if ax is None:
             ax = plt.gca()
@@ -360,35 +360,39 @@ class KernelDensityEstimate(DataSet):
         for icls, cls in enumerate(self.data_frame["class"].unique()):
             dframe_filtered = self.get_data_frame(exclude=exclude)
             mask = dframe_filtered["class"] == cls
+
+            if "schunck" in cls.lower():
+                use_colorset = sorted(colors[3:])
+                label = "Schunck $\it{et~al.}$ (\'20" + f", {level*100:.0f}\%)"
+                bins = 16
+            elif "giuliani" in cls.lower():
+                use_colorset = sorted(flatui)
+                label = "Giuliani $\it{et~al.}$ (\'22" + f", {level*100:.0f}\%)"
+                bins = 30
+            elif "mcdonnell" in cls.lower():
+                use_colorset = ["0.5"]
+                label = "McDonnell $\it{et~al.}$ (\'15" + f", {level*100:.0f}\%)"
+                bins = 10
+            else:
+                use_colorset = sorted(colorset)
+                label = cls
+                bins = 20
+
+            color = use_colorset[-icls]
+            
             if use_seaborn:
                 levels = 1. - np.atleast_1d(level)
                 if fill:
                     levels = np.append(levels, 1.)
-                sns.kdeplot(ax=ax, x=dframe_filtered[mask]["rho0"], y=dframe_filtered[mask]["E/A"],
+                sns.kdeplot(ax=ax, x=dframe_filtered[mask]["rho0"].to_numpy(), 
+                            y=dframe_filtered[mask]["E/A"].to_numpy(),
                             fill=fill, levels=levels,
-                            label=f"{cls} ({(1-levels[0])*100:.0f}\%)",
-                            legend=True,
-                            color=colors[-icls])
+                            # label=f"{cls} ({(1-levels[0])*100:.0f}\%)",
+                            legend=False,
+                            color=color
+                            )
                 # Note: sns.kdeplot() seems to have issues with displaying the handles in legends
             else:
-                if "schunck" in cls.lower():
-                    use_colorset = sorted(colors[3:])
-                    label = "Schunck $\it{et~al.}$ (\'20" + f", {level*100:.0f}\%)"
-                    bins = 16
-                elif "giuliani" in cls.lower():
-                    use_colorset = sorted(flatui)
-                    label = "Giuliani $\it{et~al.}$ (\'22" + f", {level*100:.0f}\%)"
-                    bins = 30
-                elif "mcdonnell" in cls.lower():
-                    use_colorset = ["0.5"]
-                    label = "McDonnell $\it{et~al.}$ (\'15" + f", {level*100:.0f}\%)"
-                    bins = 10
-                else:
-                    use_colorset = sorted(colorset)
-                    label = cls
-                    bins = 20
-
-                color = use_colorset[-icls]
                 corner.hist2d(x=dframe_filtered[mask]["rho0"].to_numpy(),
                               y=dframe_filtered[mask]["E/A"].to_numpy(),
                               bins=bins, range=None, weights=None,
@@ -397,9 +401,10 @@ class KernelDensityEstimate(DataSet):
                               plot_contours=True, no_fill_contours=True, fill_contours=None,
                               contour_kwargs=None, contourf_kwargs=None, data_kwargs=None,
                               pcolor_kwargs=None, new_fig=False)
-                patch = mpatches.Patch(edgecolor=color, facecolor="none",
-                                       label=label.replace(" $\it{et~al.}$", "+"))
-                additional_legend_handles.append(patch)
+                
+            patch = mpatches.Patch(edgecolor=color, facecolor="none",
+                                    label=label.replace(" $\it{et~al.}$", "+"))
+            additional_legend_handles.append(patch)
 
             #if plot_scatter:
             #    ax.scatter(x=dframe_filtered[mask]["rho0"], y=dframe_filtered[mask]["E/A"], label="scatter")
