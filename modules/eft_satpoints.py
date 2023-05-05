@@ -76,8 +76,8 @@ def make_coester_plot(fig, ax, emp_constraint=None, conf_level=None):
         #                             alpha=conf_level, **kwargs_edge)
 
         ax.legend(loc="lower center", ncol=len(conf_level), columnspacing=0.8,
-                  frameon=True, framealpha=1, edgecolor="0.8",
-                  prop={'size': 9}, bbox_to_anchor=(0.47,-0.25)) #,bbox_transform=fig.transFigure)
+                  frameon=False, framealpha=1, edgecolor="0.8",
+                  prop={'size': 9}) #, bbox_to_anchor=(0.47,-0.25)) #,bbox_transform=fig.transFigure)
 
     # plot GP-B ellipses
     plot_GPB_coester(ax, (0.176, -12.6), lam=500, color=colors_alt2[0])
@@ -144,4 +144,4 @@ def make_coester_plot(fig, ax, emp_constraint=None, conf_level=None):
 
     # axes ranges
     ax.set_xlim(0.13, 0.199)
-    ax.set_ylim(-19.4, -11.8)
+    ax.set_ylim(-20.2, -11.8)
