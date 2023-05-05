@@ -209,7 +209,7 @@ class SaturationAnalysis:
                      file_output, store_samples=True, add_info=None, pdf=None):
         use_level = 0.95
         names = ["predictive rho0", "predictive E/A"]
-        labels = ['Sat. Density $n_0$ [fm$^{-3}$]', 'Sat. Energy $E_0/A$ [MeV]']
+        labels = ['Sat. Density $n_0$ [fm$^{-3}$]', 'Sat. Energy $E_0$ [MeV]']
         fig, axs = plt.subplots(2, 2, figsize=(9*cm, 1.2*8.6*cm))
         data = az.from_dict(posterior={lbl: samples[lbl] for lbl in names})
         corner.corner(data,  # var_names=names,
