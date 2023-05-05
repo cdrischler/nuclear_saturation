@@ -44,7 +44,7 @@ def plot_coester_band(ax, data_sat, color="lightgray", shift=1.6):
                     color=color, alpha=1, zorder=0)
 
 
-def make_coester_plot(ax, emp_constraint=None, conf_level=None):
+def make_coester_plot(fig, ax, emp_constraint=None, conf_level=None):
     # read Drischler et al. results
     data_sat = pd.read_csv("data/satpoints_predicted.csv", comment="#", skiprows=0, sep=',', header=0)
 
@@ -55,8 +55,8 @@ def make_coester_plot(ax, emp_constraint=None, conf_level=None):
 
     # plot empirical point
     from modules.plot_helpers import latex_markers, plot_rectangle, colors_alt2
-    kwargs_edge = dict(facecolor='none', zorder=5, edgecolor='gray')
-    kwargs_face = dict(facecolor='w', zorder=1, edgecolor='gray')
+    kwargs_edge = dict(facecolor='none', zorder=5) #, edgecolor='gray')
+    kwargs_face = dict(facecolor='w', zorder=1) # , edgecolor='gray')
     if emp_constraint is None:
         emp_constraint = {'type': "box",
                           'rho0': (0.163655, 0.007345), 'E/A': (-15.86, 0.37)}
@@ -67,13 +67,17 @@ def make_coester_plot(ax, emp_constraint=None, conf_level=None):
         plot_rectangle(center=center, uncertainty=uncertainty, ax=ax, **kwargs_edge)
     elif emp_constraint["type"] == "t":
         from modules.plot_helpers import plot_confregion_bivariate_t
-        conf_level = (0.95, 0.99) if conf_level is None else conf_level
+        conf_level = (0.5, 0.80, 0.95, 0.99) if conf_level is None else conf_level
         plot_confregion_bivariate_t(ax=ax, mu=emp_constraint["mu"], Sigma=emp_constraint["Psi"],
                                     nu=emp_constraint["nu"], plot_scatter=False, validate=False,
                                     alpha=conf_level, **kwargs_face)
-        plot_confregion_bivariate_t(ax=ax, mu=emp_constraint["mu"], Sigma=emp_constraint["Psi"],
-                                    nu=emp_constraint["nu"], plot_scatter=False, validate=False,
-                                    alpha=conf_level, **kwargs_edge)
+        # plot_confregion_bivariate_t(ax=ax, mu=emp_constraint["mu"], Sigma=emp_constraint["Psi"],
+        #                             nu=emp_constraint["nu"], plot_scatter=False, validate=False,
+        #                             alpha=conf_level, **kwargs_edge)
+
+        ax.legend(loc="lower center", ncol=len(conf_level), columnspacing=0.8,
+                  frameon=True, framealpha=1, edgecolor="0.8",
+                  prop={'size': 9}, bbox_to_anchor=(0.47,-0.25)) #,bbox_transform=fig.transFigure)
 
     # plot GP-B ellipses
     plot_GPB_coester(ax, (0.176, -12.6), lam=500, color=colors_alt2[0])
