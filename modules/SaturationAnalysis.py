@@ -244,7 +244,7 @@ class SaturationAnalysis:
                 unit = "fm$^{-3}$"
                 title_fmt = ".3f"
             else:
-                quantity = r"\frac{E_0}{A}"
+                quantity = r"E_0"
                 unit = "MeV"
                 title_fmt = ".2f"
 
