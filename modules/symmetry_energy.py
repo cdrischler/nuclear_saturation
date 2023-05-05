@@ -202,7 +202,7 @@ def plot_UG_constraint(ax, plot_analytic=False):
     # ug_ref = 'UG: Tews, I., Lattimer, J. M., Ohnishi, A. , Kolomeitsev, E. E., APJ 848, 105'
 
 
-def make_sv_l_plot(ax, prior_set_lbl, data_set_lbl):
+def make_sv_l_plot(ax, prior_set_lbl=None, data_set_lbl=None):
     # set labels and title
     ax.set_xlabel(r"Symmetry Energy $S_v$ [MeV]")
     ax.set_ylabel(r"Slope Parameter $L$ [MeV]")
