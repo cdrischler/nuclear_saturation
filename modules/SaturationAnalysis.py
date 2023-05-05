@@ -38,10 +38,12 @@ drischler_satbox = GenericDataSet(
 
 
 class SaturationAnalysis:
-    def __init__(self, prestore_eft_fit=False, pdf_output_path="./pdf"):
+    def __init__(self, prestore_eft_fit=False, pdf_output_path="./pdf", samples_output_path="./samples"):
         self.pdf_output_path = pdf_output_path
-        if not os.path.exists(pdf_output_path):
-            os.mkdir(pdf_output_path)
+        self.samples_output_path = samples_output_path
+        for path in (pdf_output_path, samples_output_path):
+            if not os.path.exists(path):
+                os.mkdir(path)
         self.drischler_satbox = drischler_satbox
         self.eft_predictions = EftPredictions(show_result=True) if prestore_eft_fit else None
 
@@ -290,7 +292,7 @@ class SaturationAnalysis:
                 filename = file_output
             else:
                 filename = pdf._file.fh.name
-            filename = filename.replace("mc_output", "samples").replace(".pdf", ".h5")
+            filename = filename.replace("mc_output", "samples").replace(".pdf", ".h5").replace("pdf/", f"{self.samples_output_path}/")
             samples.to_hdf(filename, key='samples', mode='w', complevel=6)
             print(f"Samples written to '{filename}'.")
         return fit
