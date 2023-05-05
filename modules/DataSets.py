@@ -348,7 +348,7 @@ class KernelDensityEstimate(DataSet):
         return ret
 
     def plot(self, ax=None, level=0.95, fill=False, plot_scatter=False, marker_size=8,
-             add_legend=True, add_axis_labels=True, exclude=None, use_seaborn=False, **kwargs):
+             add_legend=True, add_axis_labels=True, exclude=None, use_seaborn=True, **kwargs):
         if ax is None:
             ax = plt.gca()
 
