@@ -160,7 +160,8 @@ class GenericDataSet(DataSet):
         if add_axis_labels:
             super().set_axes_labels(ax, set_title=False)
         if place_legend:
-            super().legend(ax, ncol=1, loc="lower right", out_of_frame=legend_out_of_frame)
+            largs = dict(ax=ax, ncol=1, loc="lower right", out_of_frame=legend_out_of_frame) if annotate else dict(ax=ax)
+            super().legend(**largs)
         super().set_axes_ranges(ax)
 
     def box_estimate(self, print_result=False, exclude=None):
