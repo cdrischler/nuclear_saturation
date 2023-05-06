@@ -424,7 +424,7 @@ def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status
         print("assuming Normal distribution instead")
         nu_est = np.inf
         Psi_est = cov_est
-    return {"mu": mu_est, "Psi": Psi_est, "nu": int(np.rint(nu_est))}
+    return {"mu": mu_est, "Psi": Psi_est, "nu": np.rint(nu_est)}
 
 
 def test_fit_bivariate_t(df=7, M=None, mu=None, size=10000000, tol=1e-3, print_status=True):
