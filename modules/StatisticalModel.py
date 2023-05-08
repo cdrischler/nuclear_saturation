@@ -518,6 +518,7 @@ def latex_it(posterior, sep = "-"*50, title=None,
         print(f"{ps['mu'][0]:.3f} \\\\ {ps['mu'][1]:.2f}")
         offdiag =  np.sqrt(np.abs(ps['Psi'][0,1])) * np.sign(ps['Psi'][0,1])
         print(f"{np.sqrt(ps['Psi'][0,0]):.3f}^2 & {offdiag:.3f}^2 \\\\ {offdiag:.3f}^2 & {np.sqrt(ps['Psi'][1,1]):.2f}^2")
+        print(f"correlation coeff: {ps['Psi'][0,1]/np.sqrt(ps['Psi'][0,0]*ps['Psi'][1,1]):.2f}")
     else:
         print("unknown input: nothing to be done")
     if print_sep_bottom : 
