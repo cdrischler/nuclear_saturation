@@ -398,32 +398,40 @@ def test_plot_confregion_univariate_t():
     return conf_intervals
 
 
-def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status=False):
-    if nu_limits is None:
-        nu_limits = (3, 40)
+def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status=False, strategy="fit_marginals"):
+    if strategy == "fit_marginals":
+        from scipy.stats import t
+        nu_first, mean_first, std_first = t.fit(data=data[:,0])
+        nu_second, mean_second, std_second = t.fit(data=data[:,1])
+        nu_est = np.mean([nu_first, nu_second])
+        mu_est = [mean_first, mean_second]
+        Psi_est = np.cov(data[:,0],data[:,1]) * (nu_est-2)/nu_est
+    else:  # count samples
+        if nu_limits is None:
+            nu_limits = (3, 40)
 
-    # estimate mean value (simple!)
-    mu_est = data.mean(axis=0)
+        # estimate mean value (simple!)
+        mu_est = data.mean(axis=0)
 
-    # estimate scale matrix (from covariance matrix)
-    cov_est = np.cov(data[:, 0], data[:, 1])
-    inv_cov_est = np.linalg.inv(cov_est)
+        # estimate scale matrix (from covariance matrix)
+        cov_est = np.cov(data[:, 0], data[:, 1])
+        inv_cov_est = np.linalg.inv(cov_est)
 
-    def metric(nu, alpha):
-        if print_status:
-            print(f"current nu: {nu}")
-        rhs = ((nu - 2)/nu) * (nu/(1-alpha)**(2/nu) - nu)  # note that this includes the radius squared!
-        X = data - mu_est
-        alpha_est = np.sum(np.einsum('ij,jk,ik->i', X, inv_cov_est, X) <= rhs)/len(data)
-        return alpha_est - alpha
-    try:
-        nu_est = optimize.bisect(metric, nu_limits[0], nu_limits[1], args=(alpha_fit,), xtol=tol)
-        Psi_est = cov_est * (nu_est-2) / nu_est
-    except ValueError as e:
-        print(f"fit of a bivariate t distribution with finite dof in ({nu_limits}) failed: '{str(e)}'")
-        print("assuming Normal distribution instead")
-        nu_est = np.inf
-        Psi_est = cov_est
+        def metric(nu, alpha):
+            if print_status:
+                print(f"current nu: {nu}")
+            rhs = ((nu - 2)/nu) * (nu/(1-alpha)**(2/nu) - nu)  # note that this includes the radius squared!
+            X = data - mu_est
+            alpha_est = np.sum(np.einsum('ij,jk,ik->i', X, inv_cov_est, X) <= rhs)/len(data)
+            return alpha_est - alpha
+        try:
+            nu_est = optimize.bisect(metric, nu_limits[0], nu_limits[1], args=(alpha_fit,), xtol=tol)
+            Psi_est = cov_est * (nu_est-2) / nu_est
+        except ValueError as e:
+            print(f"fit of a bivariate t distribution with finite dof in ({nu_limits}) failed: '{str(e)}'")
+            print("assuming Normal distribution instead")
+            nu_est = np.inf
+            Psi_est = cov_est
     return {"mu": mu_est, "Psi": Psi_est, "nu": np.rint(nu_est)}
 
 
