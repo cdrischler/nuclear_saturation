@@ -202,7 +202,9 @@ def plot_UG_constraint(ax, plot_analytic=False):
     # ug_ref = 'UG: Tews, I., Lattimer, J. M., Ohnishi, A. , Kolomeitsev, E. E., APJ 848, 105'
 
 
-def make_sv_l_plot(ax, emp_distr=None):
+def make_sv_l_plot(ax, emp_distr=None, plot_reference=True):
+    (alpha1s, alpha2s) = (0.6, 0.5)
+    
     # set labels and title
     ax.set_xlabel(r"Symmetry Energy $S_v$ [MeV]")
     ax.set_ylabel(r"Slope Parameter $L$ [MeV]")
@@ -215,65 +217,65 @@ def make_sv_l_plot(ax, emp_distr=None):
     ax.yaxis.set_minor_locator(AutoMinorLocator(n=2))
     ax.xaxis.set_minor_locator(AutoMinorLocator(n=2))
     ax.tick_params(width=0.7, which='major')
+    
+    if plot_reference:
+        # external sources
+        i = 1
+        for src in avail_srcs:
+            plot_source(ax, zorder=i, **src)
+            i += 1
 
-    # external sources
-    i = 1
-    for src in avail_srcs:
-        plot_source(ax, zorder=i, **src)
+        # UG constraints
+        plot_UG_constraint(ax)
         i += 1
 
-    # UG constraints
-    plot_UG_constraint(ax)
-    i += 1
+        # GP-B constraints
+        for ieft, Esym_L in enumerate(reversed(Esym_L_eft)):
+            color =lighten_color(colors_alt[0], 0.5*(1+ieft))
+            confidence_ellipse_mean_cov(
+                Esym_L["mean"], Esym_L["cov"], ax=ax, n_std=2,
+                facecolor=color, edgecolor='k', alpha=alpha2s, zorder=i+1
+            )
+            confidence_ellipse_mean_cov(
+                Esym_L["mean"], Esym_L["cov"], ax=ax, n_std=1,
+                facecolor=lighten_color(color, 0.6), edgecolor='k', alpha=alpha1s, zorder=i+1
+            )
 
-    # GP-B constraints
-    for ieft, Esym_L in enumerate(reversed(Esym_L_eft)):
-        color =lighten_color(colors_alt[0], 0.5*(1+ieft))
-        (alpha1s, alpha2s) = (0.6, 0.5)
-        confidence_ellipse_mean_cov(
-            Esym_L["mean"], Esym_L["cov"], ax=ax, n_std=2,
-            facecolor=color, edgecolor='k', alpha=alpha2s, zorder=i+1
-        )
-        confidence_ellipse_mean_cov(
-            Esym_L["mean"], Esym_L["cov"], ax=ax, n_std=1,
-            facecolor=lighten_color(color, 0.6), edgecolor='k', alpha=alpha1s, zorder=i+1
-        )
+            bbox_dict = dict(boxstyle="round,pad=0.5", fc=color, alpha=alpha1s, ec="none", lw=1)
+            ax.annotate(f"GP--B {[450,500][ieft]}",
+                        xy=Esym_L["mean"],
+                        xytext=(30., 85.5-ieft*6), textcoords='data',
+                        arrowprops={'arrowstyle':'-','color':color, 'alpha':alpha1s,'relpos':(1., 0.5),
+                                    'shrinkA':5, 'shrinkB':5, 'patchA':None, 'patchB':None,
+                                    'connectionstyle':"angle3,angleA=-11,angleB=100"},
+                        horizontalalignment='left', verticalalignment='bottom',
+                        rotation=0, size=5, zorder=i, bbox=bbox_dict)
 
-        bbox_dict = dict(boxstyle="round,pad=0.5", fc=color, alpha=alpha1s, ec="none", lw=1)
-        ax.annotate(f"GP--B {[450,500][ieft]}",
-                    xy=Esym_L["mean"],
-                    xytext=(30., 85.5-ieft*6), textcoords='data',
-                    arrowprops={'arrowstyle':'-','color':color, 'alpha':alpha1s,'relpos':(1., 0.5),
-                                'shrinkA':5, 'shrinkB':5, 'patchA':None, 'patchB':None,
-                                'connectionstyle':"angle3,angleA=-11,angleB=100"},
-                    horizontalalignment='left', verticalalignment='bottom',
-                    rotation=0, size=5, zorder=i, bbox=bbox_dict)
+        # plot HK constraint
+        i += 1
+        plot_holt_kaiser(ax, color=lighten_color(colors_alt[6], 1.))
 
-    # plot HK constraint
-    i += 1
-    plot_holt_kaiser(ax, color=lighten_color(colors_alt[6], 1.))
-
-    # plot PREX-informed result
-    mean = np.array([38.1, 106])
-    cov = np.diag([4.7, 37])**2
-    for n_std in (3, 2, 1):
-        confidence_ellipse_mean_cov(
-            mean, cov, ax=ax, n_std=n_std,
-            facecolor=lighten_color("k", 1/n_std), edgecolor='k', alpha=0.66, zorder=0
-        )
-    ax.text(
-        0.52, 0.2, "Reed $\\textit{et~al.}$\nPREX--II informed", fontdict=dict(color="k"),
-        rotation=0, transform=ax.transAxes,
-        fontsize=annotate_fs+1
-    )
-
-    reed_lbl_pos = {1: 0.86, 2: 0.45, 3: 0.1}
-    for nsig in range(1,4):
+        # plot PREX-informed result
+        mean = np.array([38.1, 106])
+        cov = np.diag([4.7, 37])**2
+        for n_std in (3, 2, 1):
+            confidence_ellipse_mean_cov(
+                mean, cov, ax=ax, n_std=n_std,
+                facecolor=lighten_color("k", 1/n_std), edgecolor='k', alpha=0.66, zorder=0
+            )
         ax.text(
-            0.92, reed_lbl_pos[nsig], f"${nsig}\sigma$", fontdict=dict(color="w"),
+            0.52, 0.2, "Reed $\\textit{et~al.}$\nPREX--II informed", fontdict=dict(color="k"),
             rotation=0, transform=ax.transAxes,
-            fontsize=annotate_fs+4
+            fontsize=annotate_fs+1
         )
+
+        reed_lbl_pos = {1: 0.86, 2: 0.45, 3: 0.1}
+        for nsig in range(1,4):
+            ax.text(
+                0.92, reed_lbl_pos[nsig], f"${nsig}\sigma$", fontdict=dict(color="w"),
+                rotation=0, transform=ax.transAxes,
+                fontsize=annotate_fs+4
+            )
     
     # plots constraints of this work (see BUQEYE Jupyter notebook)
     if emp_distr is not None:
@@ -282,7 +284,7 @@ def make_sv_l_plot(ax, emp_distr=None):
         for n_std in range(1,3):
             confidence_ellipse_mean_cov(
                 mean, cov, ax=ax, n_std=n_std,
-                facecolor="r", edgecolor='k', alpha=alpha2s, zorder=i+1
+                facecolor="g", edgecolor='k', alpha=alpha2s, zorder=200
             )
 
 #%%
