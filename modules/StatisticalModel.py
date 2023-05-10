@@ -504,7 +504,13 @@ def latex_it(posterior, sep = "-"*50, title=None,
         print(sep)
     if title is not None:
         print(title)
-    if np.all([elem in ps.keys() for elem in ("mu", "Psi", "nu", "kappa")]):
+    if np.all([elem in ps.keys() for elem in ("mu", "cov")]):
+        # fit normal distributino for (Sv,L)
+        print(f"{ps['mu'][0]:.3f} \\\\ {ps['mu'][1]:.2f}")
+        offdiag =  np.sqrt(np.abs(ps['cov'][0,1])) * np.sign(ps['cov'][0,1])
+        print(f"{np.sqrt(ps['cov'][0,0]):.3f}^2 & {offdiag:.3f}^2 \\\\ {offdiag:.3f}^2 & {np.sqrt(ps['cov'][1,1]):.2f}^2")
+        print(f"correlation coeff: {ps['cov'][0,1]/np.sqrt(ps['cov'][0,0]*ps['cov'][1,1]):.2f}")
+    elif np.all([elem in ps.keys() for elem in ("mu", "Psi", "nu", "kappa")]):
         # NIW prior or posterior
         if "label" in ps.keys():
             print(ps["label"])
