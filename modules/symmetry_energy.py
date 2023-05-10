@@ -136,13 +136,13 @@ def plot_holt_kaiser(ax, color='w', alpha=1, lw=1.1, zorder=10):
     i = 0
     bbox_dict = dict(boxstyle="round,pad=0.5", fc=color, alpha=alpha, ec="none", lw=lw)
     ax.annotate(f"HK",
-                xy=(x1+0.5,y1),
-                xytext=(33.5,42), textcoords='data',
+                xy=(xp1[155]-0.4,yp1[155]),
+                xytext=(33.5,35), textcoords='data',
                 arrowprops={'arrowstyle':'-','color':color, 'alpha':alpha,'relpos':(0., 0.5),
                             'shrinkA':5, 'shrinkB':5, 'patchA':None, 'patchB':None,
                             'connectionstyle':"angle3,angleA=0,angleB=100"},
                 horizontalalignment='left', verticalalignment='bottom',
-                rotation=0, size=5, zorder=i+1, bbox=bbox_dict)
+                rotation=0, size=5, zorder=i+100, bbox=bbox_dict)
 
     image_type = 'pdf'
 
@@ -204,7 +204,7 @@ def plot_UG_constraint(ax, plot_analytic=False):
 
 def make_sv_l_plot(ax, emp_distr=None, plot_reference=True):
     (alpha1s, alpha2s) = (0.6, 0.5)
-    
+
     # set labels and title
     ax.set_xlabel(r"Symmetry Energy $S_v$ [MeV]")
     ax.set_ylabel(r"Slope Parameter $L$ [MeV]")
