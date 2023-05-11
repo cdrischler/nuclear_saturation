@@ -192,6 +192,8 @@ class NormDistDataSet(DataSet):
         data = []; labels = []
         if set_specifier == "fsu_rmf":
             files = sorted(glob.glob("data/Piekarewicz/*/CovEllipse.com"))
+            # we ignore RMF016 as it is almost identical to FSUGarnet (in terms of saturation)
+            files = [file for file in files if "RMF016" not in file] 
             for file in files:
                 labels.append(re.search(r"(\w+)/Cov", file).group(1))
                 data.append(open(file, 'r').readlines()[3].strip().split(","))
