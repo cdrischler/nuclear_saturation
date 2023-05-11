@@ -48,7 +48,7 @@ class SaturationAnalysis:
         self.eft_predictions = EftPredictions(show_result=True) if prestore_eft_fit else None
 
     def plot_constraints(self, dft_constraints=None, eft=False, dft_conf_level=0.95,
-                         eft_conf_level=0.95, eft_plot_scatter=True):
+                         eft_conf_level=0.95, eft_plot_scatter=True, add_svm=True):
         pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.pdf_output_path}/constraints.pdf")
         fig, ax = plt.subplots(1, 1, figsize=(1.25*6.8*cm, 1.3*6.8*cm))
         self.drischler_satbox.plot(ax=ax, plot_scatter=False, plot_box_estimate=True, marker_size=8,
@@ -67,6 +67,50 @@ class SaturationAnalysis:
             if self.eft_predictions is None:
                 self.eft_predictions = EftPredictions(show_result=True)
             self.eft_predictions.plot(ax=ax, level=eft_conf_level, plot_scatter=eft_plot_scatter)
+            pdf.savefig(fig)
+        
+        # add support vector machine for classification into RMF vs Skryme, if requested
+        if add_svm:
+            # generate data (mean values)
+            data = []
+            for key, val in dft_constraints.items():
+                is_rmf = (("rmf" in key) or ("giuliani" in key.lower()))
+                if isinstance(val, NormDistDataSet):
+                    tmp = val.data_frame[["mean rho0", "mean E/A"]].rename(
+                        columns={"mean rho0": "rho0", "mean E/A": "E/A"}, errors="raise")
+                elif isinstance(val, KernelDensityEstimate):
+                    tmp = val.data_frame[["rho0", "E/A"]].mean()
+                    tmp = pd.DataFrame(data={"rho0": [tmp.loc["rho0"]], "E/A": [tmp.loc["E/A"]]})
+                else:
+                    tmp = val.data_frame[["rho0", "E/A"]]
+                tmp = tmp.copy()
+                tmp["rmf?"] = is_rmf
+                data.append(tmp)
+            data = pd.concat(data)
+
+            from sklearn.svm import SVC
+            from sklearn.pipeline import make_pipeline
+            from sklearn.preprocessing import StandardScaler
+            regr = make_pipeline(StandardScaler(), SVC(kernel="linear", C=100))
+            
+            X_train = data[["rho0", "E/A"]]
+            regr.fit(X_train.to_numpy(), data["rmf?"].to_numpy())
+
+            # plot the decision function
+            # https://scikit-learn.org/stable/auto_examples/svm/plot_separating_hyperplane.html
+            from sklearn.inspection import DecisionBoundaryDisplay
+            DecisionBoundaryDisplay.from_estimator(
+                regr,
+                X_train.to_numpy(),
+                plot_method="contour",
+                colors="darkgrey",
+                levels=[-1, 0, 1],
+                alpha=0.5,
+                zorder=0,
+                linestyles=["--", "-", "--"],
+                ax=ax,
+            )
+            # ax.scatter(X_train["rho0"], X_train["E/A"], c=data["rmf?"], cmap=plt.cm.Paired)
             pdf.savefig(fig)
         pdf.close()
         # return fig, ax
