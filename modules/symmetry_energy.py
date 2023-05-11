@@ -202,7 +202,7 @@ def plot_UG_constraint(ax, plot_analytic=False):
     # ug_ref = 'UG: Tews, I., Lattimer, J. M., Ohnishi, A. , Kolomeitsev, E. E., APJ 848, 105'
 
 
-def make_sv_l_plot(ax, emp_distr=None, plot_reference=True):
+def make_sv_l_plot(ax, emp_distr=None, plot_reference=True, lighten_ellipse_color=False, tag_descr=None):
     (alpha1s, alpha2s) = (0.6, 0.5)
 
     # set labels and title
@@ -279,12 +279,29 @@ def make_sv_l_plot(ax, emp_distr=None, plot_reference=True):
     
     # plots constraints of this work (see BUQEYE Jupyter notebook)
     if emp_distr is not None:
+        color = green
+        alpha_offset = 0.02
+        if lighten_ellipse_color:
+            color = lighten_color(color, 0.5)
         mean = emp_distr["mu"]
         cov = emp_distr["cov"]
-        for n_std in range(1,3):
-            confidence_ellipse_mean_cov(
-                mean, cov, ax=ax, n_std=n_std,
-                facecolor="g", edgecolor='k', alpha=alpha2s, zorder=200
-            )
+        confidence_ellipse_mean_cov(
+            mean, cov, ax=ax, n_std=2,
+            facecolor=color, edgecolor='k', alpha=alpha2s+alpha_offset, zorder=200
+        )
+        confidence_ellipse_mean_cov(
+            mean, cov, ax=ax, n_std=1,
+            facecolor=lighten_color(color, 0.6), edgecolor='k', alpha=alpha1s+alpha_offset, zorder=300
+        )
+
+        if type(tag_descr) is dict: 
+            bbox_dict = dict(boxstyle="round,pad=0.5", fc=color, alpha=1, ec="none", lw=1.1)
+            ax.annotate(tag_descr["label"], xy=tag_descr["xy"], xytext=tag_descr["xytext"], 
+                        textcoords='data', 
+            # , arrowprops={'arrowstyle':'-','color':color, 'alpha':1,'relpos':(0., 0.5),
+                            # 'shrinkA':5, 'shrinkB':5, 'patchA':None, 'patchB':None,
+                            # 'connectionstyle':"angle3,angleA=0,angleB=100"},
+                         horizontalalignment='left', verticalalignment='bottom',
+                         rotation=0, size=5, zorder=100, bbox=bbox_dict)
 
 #%%
