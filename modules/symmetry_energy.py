@@ -264,7 +264,7 @@ def make_sv_l_plot(ax, emp_distr=None, plot_reference=True, lighten_ellipse_colo
                 facecolor=lighten_color("k", 1/n_std), edgecolor='k', alpha=0.66, zorder=0
             )
         ax.text(
-            0.52, 0.2, "Reed $\\textit{et~al.}$\nPREX--II informed", fontdict=dict(color="k"),
+            0.52, 0.2, "Reed $\\textit{et~al.}$\n(PREX--II informed)", fontdict=dict(color="k"),
             rotation=0, transform=ax.transAxes,
             fontsize=annotate_fs+1
         )
