@@ -61,10 +61,17 @@ latex_markers = ["$\medblackstar$",
 
 
 def highlight_saturation_density(ax, n0=0.164, n0_std=0.007, zorder=-1, alpha=0.5, color='0.6'):
+    """
+    highlights specified `n0 +/- n0_std` range on axis `ax` (vertical span). 
+    Other parameters determine its appearence.
+    """
     ax.axvspan(n0-n0_std, n0+n0_std, zorder=zorder, alpha=alpha, color=color)
 
 
 class HandlerEllipse(HandlerPatch):
+    """
+    simple helper class for plotting confidence ellipses
+    """
     def create_artists(self, legend, orig_handle,
                        xdescent, ydescent, width, height, fontsize, trans):
         center = 0.5 * width - 0.5 * xdescent, 0.5 * height - 0.5 * ydescent
@@ -199,6 +206,7 @@ def darken_color(color, amount=0.5):
 def plot_rectangle(center, uncertainty, ax=None, **kwargs):
     """
     plots a rectangle centered at `center` and with width & height specified by uncertainty
+
     :param center: center of the rectangle, 2d array
     :param uncertainty: symmetric uncertainty, i.e., length of rectangle = 2 uncertainty; 2d array
     :param ax: axis for plotting
@@ -223,12 +231,14 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
                                 sym_tol=1e-12, radius_tol=1e-3, ellipse_tol=1e-10, **kwargs):
     """
     Plots the confidence region of the bivariate t-distribution efficiently (without sampling)
+    
     :param mu: mean vector (length-2)
     :param Sigma: sym., pos. def. scale matrix (will be verified)
     :param nu: degree of freedom, nu > 0
     :param ax: matplotlib axis used for plotting
     :param alpha: credibility levels [float or array of floats],
     either in decimal or in units of sigma (normal distribution) if alpha_unit="normal_std"
+
     :param alpha_unit: see alpha
     :param num_pts: number of points used for sampling (if scatter plot or validation is requested)
     :param plot_scatter: sample and plot `num_pts` points from distribution (bool)
@@ -236,6 +246,7 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
     :param sym_tol: tolerance for checking for symmetric matrix
     :param radius_tol: tolerance for checking radius in deformed coordinate system
     :param ellipse_tol: tolerance for checking confidence ellipse coordinate system
+
     :return: Nothing
     """
     # use default levels if levels are not specified
@@ -339,6 +350,26 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
 def plot_confregion_univariate_t(mu, Sigma, nu, ax=None, alpha=None, num_pts=100000000,
                                 plot_hist=False, validate=True, orientation="horizontal",
                                 atol=1e-3, plot_quantile="line", **kwargs):
+    """
+    plot confidence region of the univariate student t-distribution t_nu(mu, Sigma) 
+
+    Parameters
+    ----------
+    mu, Sigma, nu : parameters of the distribution
+    ax : The axes object to draw the ellipse into. (matplotlib.axes.Axes)
+    alpha: transparency value
+    num_pts: number of points used for validation (if enabled) via sampling
+    plot_hist: specifies whether or not to plot a histogram after smapling
+    validate: specifies whether to validate the determined confidence region using sampling
+    orientation: orientation of the histogram plot
+    atol: absolute tolerance used to determine whether validation passed
+    plot_quantile: specifies whether quantiles are plotted as a "band" or "line"
+
+    Returns
+    -------
+    confidence region as numpy array
+    """
+        
     # pick current axis if none is specified
     if ax is None:
         ax = plt.gca()
@@ -390,15 +421,38 @@ def plot_confregion_univariate_t(mu, Sigma, nu, ax=None, alpha=None, num_pts=100
 
 
 def test_plot_confregion_univariate_t():
+    """
+    simple unit test to make sure the limit nu --> infty of the studen t-distribution (Gaussian) is correct.
+    Raises an error if not.
+    """
     mu = 4
     Sigma = 2
     nu = 90000  # hence, approx. a normal distribution
     alpha = (0.6826894921370859, 0.9544997361036416, 0.9973002039367398)
-    conf_intervals = plot_confregion_univariate_t(mu=mu, Sigma=Sigma, nu=nu, alpha=alpha)
-    return conf_intervals
+    conf_intervals = plot_confregion_univariate_t(mu=mu, Sigma=Sigma, nu=nu, alpha=alpha, validate=True)
+    assert conf_intervals
 
 
 def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status=False, strategy="fit_marginals"):
+    """
+    optimizes a bivariate t-distribution to samples in `data` 
+
+    Parameters
+    ----------
+    data : array with (x,y) samples
+    alpha_fit : confidence level at which to optimize
+    nu_limits : limits (lower, upper) of the dof nu
+    tol: requested tolerance of the fit
+    plot_hist: specifies whether or not to plot a histogram after smapling
+    print_status: boolean as to print debugging information
+    strategy: specifies how the fit is performed either by fitting the marginals ("fit_marginals")
+    or by counting samples in a given confidence region (else)
+
+    Returns
+    -------
+    dictionary specifying the parameters of the optimized bivariate t-distribution
+    """
+        
     if strategy == "fit_marginals":
         from scipy.stats import t
         nu_first, mean_first, std_first = t.fit(data=data[:,0])
@@ -436,6 +490,13 @@ def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status
 
 
 def test_fit_bivariate_t(df=7, M=None, mu=None, size=10000000, tol=1e-3, print_status=True):
+    """
+    simple test of `fit_bivariate_t()` using brute-force sampling `size` times. 
+    `df`, `M`, `mu` specify the dof, shape matrix, and mean vector of the t-distribution used to generate
+    mock data;
+
+    raises an error if the test doesn't pass
+    """
     nu_limits = (3, 8)
     if np.isfinite(df) and df > nu_limits[1]:
         print(f"requested (finite) df={df} too high")
@@ -459,7 +520,7 @@ def test_fit_bivariate_t(df=7, M=None, mu=None, size=10000000, tol=1e-3, print_s
     stat_mu = np.abs(mu-fit["mu"]) < tol
     stat_psi = np.abs(M-fit["Psi"]) < tol
     stat_nu = np.abs(df-fit["nu"]) < tol if not is_normal_distr else True
-    return np.any(stat_mu) and np.any(stat_psi) and stat_nu
+    assert np.any(stat_mu) and np.any(stat_psi) and stat_nu
 # test_fit_bivariate_t()
 
 #%%

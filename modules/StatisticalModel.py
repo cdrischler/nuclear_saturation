@@ -8,7 +8,20 @@ from modules.priors import standard_prior_params
 
 
 class StatisticalModel:
+    """
+    implements our statistical model (see our manuscript) for analysing constraints without uncertainties,
+    which is the lowest level of our model/analsysis
+    """
     def __init__(self, data, quantities=None, prior_params=None):
+        """
+        initializes the class
+
+        Parameters:
+        -----------
+        data: pandas data frame with the data n0, E0
+        quantities: the headers in the dataframe `data` to be used
+        prior_params: hyperparamters of the NIW prior distribution (dict)
+        """
         assert data is None or isinstance(data, pd.DataFrame), "`data` for StatisticalModel must be None or a Dataframe"
         self.data = data
         self.quantities = quantities if quantities else ["rho0", "E/A"]
@@ -476,22 +489,37 @@ class StatisticalModel:
 
     @staticmethod
     def set_xy_lim(ax):
+        """
+        convenience function to set the x,y limits in a natural range for the saturation point
+        """
         ax.set_xlim(0.145, 0.175)
         ax.set_ylim(-16.5, -15.00)
 
     @property
     def xlabel(self):
+        """
+        convenience function to set the xlabel to the saturation density
+        """
         return 'Sat. Density $n_0$ [fm$^{-3}$]'
 
     @property
     def ylabel(self):
+        """
+        convenience function to set the xlabel to the saturation energy
+        """
         return 'Sat. Energy $E_0$ [MeV]'
 
     def set_xy_lbls(self, ax):
+        """
+        convenience function to set the xlabel and ylabel according to the saturation point
+        """
         ax.set_xlabel(self.xlabel)
         ax.set_ylabel(self.ylabel)
 
     def print_latex(self):
+        """
+        prints out the results of the analysis in LaTeX format
+        """
         latex_it(self.posterior_params, print_sep_bottom=True,
                  title=f"posterior params: {self.prior_params['label']}")
         latex_it(self.predictives_params(return_dict=True), print_sep_top=False,
@@ -499,6 +527,17 @@ class StatisticalModel:
 
 def latex_it(posterior, sep = "-"*50, title=None, 
              print_sep_top=True, print_sep_bottom=True):
+    """
+    prints out the results of the analysis in LaTeX format
+
+    Parameters:
+    -----------
+    posterior: distribution function used to determine the values of the output
+    sep: separator between different parts of the result output
+    title: prints this string as the overall title if not None
+    print_sep_top: toggle whether to print a separator at the top of the output
+    print_sep_bottom: toggle whether to print a separator at the bottom of the output
+    """
     ps = posterior
     if print_sep_top : 
         print(sep)

@@ -1,3 +1,7 @@
+"""
+This file specifies the (parameters of the) prior distribution functions, which are NIW 
+"""
+
 import numpy as np
 
 
@@ -21,6 +25,9 @@ used_prior_sets = [setA_prior_params, setB_prior_params, standard_prior_params]
 
 
 def label_filename(label):
+    """
+    converts the string `label` to lower case and replaces a white space with an underscore
+    """
     return label.lower().replace(" ", "_")
 
 # Note (taken from https://en.wikipedia.org/wiki/Conjugate_prior)

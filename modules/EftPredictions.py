@@ -9,7 +9,17 @@ from modules.plot_helpers import cm
 
 
 class EftPredictions:
+    """
+    class to handle all EFT predictions for the nuclear saturation point
+    """
     def __init__(self, filename=None, show_result=False):
+        """
+        Parameter:
+        ----------
+        filename: path to file containing EFT predictions (relative to the root folder), 
+        defaults to "data/satpoints_predicted.csv"
+        show_result: toggle whether to show the results of the fit of the Coester Band
+        """
         filename = filename if filename else "data/satpoints_predicted.csv"
         self.data = self.read_data(filename)
         self.model, self.trace = self.fit(show_result=show_result)
@@ -17,10 +27,22 @@ class EftPredictions:
         self.posterior_predictive_sampled = self.posterior_predictive(self.x_validate)
 
     def read_data(self, filename):
+        """
+        helper function to read in the EFT prediction data with (relative) file path `filename`
+        """
         data = pd.read_csv(filename)
         return data[((data["method"] == "MBPT") & (data["mbpt_order"] == 4)) | (data["method"] == "MBPT*")]
 
     def fit(self, draws=10000, tune=2000, target_accept=.95, show_result=False):
+        """
+        performs Bayesian linear region on the EFT predictions (Coester Band)
+
+        Parameters:
+        draws: number of samples
+        tune: number of samples for burn in
+        target_accept: target acception value for MC sampling
+        show_result: toggle to output the results of the regression
+        """
         print("Performing Bayesian linear regression on EFT predictions (Coester Band)")
         with pm.Model() as model:
             x_data = pm.Data("x_data", self.data["n0"])
@@ -41,9 +63,15 @@ class EftPredictions:
 
     @property
     def summary(self):
+        """
+        print useful (summary) information of the regression (Coester Band)
+        """
         return az.summary(self.trace)
 
     def corner_plot(self):
+        """
+        returns a matplotlib figure with the correlation (corner) plot of the 2 parameters of the fit model
+        """
         with self.model:
             names = ["beta_0", "beta_1", "sigma"]
             labels = [r"$\beta_0$", r"$\beta_1$", r"$\sigma$"]
@@ -55,6 +83,13 @@ class EftPredictions:
             return figure
 
     def posterior_predictive(self, x_validate=None):
+        """
+        return samples of the posterior predictive
+
+        Parameters:
+        -----------
+        x_validate: if not None, the posterior predictive will be evaluated on this grid
+        """
         if x_validate is None:
             return self.posterior_predictive_sampled
 
@@ -64,6 +99,16 @@ class EftPredictions:
             return posterior_predict
 
     def plot(self, ax=None, level=0.95, plot_scatter=True, x_validate=None):
+        """
+        plots the the EFT constraints with Coester Band
+
+        Parameters:
+        -----------
+        ax: matplotlib axis to plot in
+        level: confidence level for the posterior predictive (decimal, < 1)
+        plot_scatter: plot the underlying EFT constraints provided in `self.data`
+        x_validate: density grid to evaluate the posterior predictive on
+        """
         if ax is None:
             ax = plt.gca()
 

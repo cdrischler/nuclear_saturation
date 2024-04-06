@@ -8,7 +8,7 @@ from modules.plot_helpers import lighten_color, colors_alt, confidence_ellipse_m
 annotate_fs = 7
 avail_srcs = []
 
-
+# the following lines define constraints on Esym, L from external sourcese
 # Hebeler et al.
 data_H = pd.read_csv("./data/Sv_L/H.csv", names=['Esym', 'L'], comment="#")
 avail_srcs.append({
@@ -50,6 +50,9 @@ avail_srcs.append({
 
 # Unitary gas limit
 def getUgConstraint( ut, EUG0, Kn, Qnlower, Qnupper, E0 ):
+    """
+    returns 
+    """
     taylorDiff = ut-1.
     Qn = np.where(ut < 1, Qnlower, Qnupper)
     Esym = EUG0/(3.*np.cbrt(ut)) * (ut+2.) + Kn/18. * taylorDiff**2 + Qn/81. * taylorDiff**3 - E0
@@ -58,6 +61,9 @@ def getUgConstraint( ut, EUG0, Kn, Qnlower, Qnupper, E0 ):
 
 
 def getUgAnalyticConstraint( L, EUG0, E0 ):
+    """
+    returns the Unitary Gas Analytic constraints given values for `L`, `E_UG^0`, and `E0`
+    """
     return L/6. * ( 1. + 2. * (2.* EUG0 / L)**(3/2) ) - E0
 
 
@@ -68,6 +74,9 @@ def plot_source(
         facecolor=None, edgecolor='k', ls='-', lw=0.5, hatch=None,
         zorder=None, **kwargs
 ):
+    """
+    plots E_sym, L constraint from external sources defined above
+    """
     if not use_spline:
         ax.fill(
             Esym, L, edgecolor=edgecolor, ls=ls, lw=lw, facecolor=facecolor,
@@ -97,6 +106,9 @@ def plot_source(
 
 
 def plot_holt_kaiser(ax, color='w', alpha=1, lw=1.1, zorder=10):
+    """
+    plots Esym, L constraint derived by Holt & Kaiser in `ax`.
+    """
     #  Holt/Kaiser PRC 2017
     alf1=1.41508   ## correlation angle
     alf2=1.43502   ## correlation angle
@@ -164,6 +176,10 @@ Esym_L_eft[1]["cov"] = np.array([
 
 
 def plot_UG_constraint(ax, plot_analytic=False):
+    """
+    plots Esym, L Unitary Gas constraint derived by Tews et al. in `ax`.
+    If `plot_analytic`, also the analytic constraint will be plotted.
+    """
     # Add the unitary gas constraint boundaries
     ut = np.linspace(0.001, 2, 100)
     tews_zorder = 11
@@ -203,6 +219,17 @@ def plot_UG_constraint(ax, plot_analytic=False):
 
 
 def make_sv_l_plot(ax, emp_distr=None, plot_reference=True, lighten_ellipse_color=False, tag_descr=None):
+    """
+    plots all available constraints in the Sv,L plane to `ax`.
+
+    Parameters:
+    -----------
+    ax: matplotlib axis
+    emp_distr: empirical distribution as a reference (dict, as bove)
+    plot_reference: toggle whether to plot the empirical saturation distribution
+    lighten_ellipse_color: lighten color of the ellipses
+    tag_descr: dictionary containing tags for the different constraints, and properties such as their locations
+    """
     (alpha1s, alpha2s) = (0.6, 0.5)
 
     # set labels and title

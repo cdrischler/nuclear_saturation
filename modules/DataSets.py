@@ -17,12 +17,26 @@ from dataclasses import dataclass
 
 
 class DataSet(ABC):
+    """
+    abstract class to handle data sets for the nuclear saturation point in various forms
+    """
     def __init__(self, set_specifier, filenames):
+        """
+        initializes the class
+        
+        Parameters:
+        -----------
+        set_specifier: string identifier of the data set
+        filenames: file paths to data (will be concatenated)
+        """
         self.set_specifier = set_specifier
         self.filenames = [filenames] if isinstance(filenames, str) else filenames
         self.data_frame = None
 
     def humanize_class_labels(self, clbl):  #TODO
+        """
+        return a readable version of the class labels
+        """
         trans = dict(
             dutra_skyrme="Dutra et al. (\'12)",
             kortelainen="Kortelainen et al. (\'14)",
@@ -34,6 +48,14 @@ class DataSet(ABC):
         return trans.get(clbl, default_value).replace(" et al.", "+")  # " $\it{et~al.}$")
 
     def get_data_frame(self, exclude=None, exclude_in_col="label"):
+        """
+        returns requested data frame, columns and rows can be excluded
+
+        Parameters:
+        -----------
+        exclude: excludes specified rows (list, iterable)
+        exclude_in_col: excludes the specified column labels (list, iterable)
+        """
         if exclude is None:
             return self.data_frame
         else:
@@ -42,6 +64,9 @@ class DataSet(ABC):
     def get_statistical_model(self, exclude=None, num_points=1, num_pts_per_distr=1,
                               num_distr="all", replace=True, quantities=None, prior_params=None,
                               random_state=None):
+        """
+        abstract method to sample from the data constraints
+        """
         if isinstance(self, GenericDataSet):
             data = self.get_data_frame(exclude=exclude)
         else:
@@ -50,6 +75,9 @@ class DataSet(ABC):
         return StatisticalModel(data=data, quantities=quantities, prior_params=prior_params)
 
     def sample_from_model(self, df=None, num_samples=1, kind="predictive_y", based_on="posterior", random_state=None, validate=True, **kwargs):
+        """
+        abstract method to sample from the data constraints
+        """
         model = self.get_statistical_model(**kwargs)
         ret = model.sample(num_samples=num_samples, kind=kind, based_on=based_on, random_state=random_state, validate=validate)
         ret = pd.DataFrame(data=ret, columns=["rho0", "E/A"])
@@ -60,6 +88,9 @@ class DataSet(ABC):
     @staticmethod
     def read_csv_files(filenames, comment="#", data_path="data", dtype=None,
                        search_pattern=r"satpoints_(\w*).csv"):
+        """
+        abstract method to sample from the data constraints
+        """
         dtype = {"label": str, "rho0": np.float64, "E/A": np.float64} if dtype is None else dtype
         data = pd.DataFrame()
         for file in filenames:
@@ -73,19 +104,31 @@ class DataSet(ABC):
 
     @abstractmethod
     def sample(self, **kwargs):
+        """
+        abstract method to sample from the data constraints
+        """
         pass
 
     @abstractmethod
     def plot(self, **kwargs):
+        """
+        abstract method to plot from the data constraints
+        """
         pass
 
     @staticmethod
     def set_axes_ranges(ax):
+        """
+        sets plot axis ranges to natural/typical ranges
+        """
         ax.set_xlim(0.146, 0.172)
         ax.set_ylim(-16.45, -15.45)
 
     @staticmethod
     def set_axes_labels(ax, set_title=True):
+        """
+        sets axis labels consistent with saturation point analyses
+        """
         ax.set_xlabel('Sat. Density $n_0$ [fm$^{-3}$]')
         ax.set_ylabel('Sat. Energy $E_0$ [MeV]')
         if set_title:
@@ -93,6 +136,9 @@ class DataSet(ABC):
 
     @staticmethod
     def legend(ax, ncol=2, loc="upper left", out_of_frame=True, **kwargs):
+        """
+        places a legend with the usual matplotlib arguments.
+        """
         ax.legend(ncol=ncol, loc=loc,  # title="empirical constraints",
                   frameon=True, framealpha=1, edgecolor="0.8",
                   prop={'size': 6},
@@ -102,15 +148,26 @@ class DataSet(ABC):
 
 
 class GenericDataSet(DataSet):
+    """
+    implements generic data sets, which are given as (n0, E0) data
+    """
     def __init__(self, set_specifier, filenames):
+        """ initializes the class"""
         super().__init__(set_specifier=set_specifier, filenames=filenames)
         self.data_frame = super().read_csv_files(self.filenames)
 
     def __add__(self, other):
+        """
+        implements addition of two class instances, which merges their underlying data sets
+        """
         return GenericDataSet(set_specifier=self.set_specifier + other.set_specifier,
                               filenames=self.filenames + other.filenames)
 
     def sample(self, df=None, num_points=1, replace=True, exclude=None, random_state=None):
+        """
+        sample from the data, with or without replacement (controlled by `replace`).
+        if `df` is a valid dataframe, the result will be appended to this data frame
+        """
         ret = self.get_data_frame(exclude=exclude)
         if isinstance(num_points, int):
             ret = ret.sample(num_points, replace=replace, random_state=random_state)
@@ -123,6 +180,9 @@ class GenericDataSet(DataSet):
     def plot(self, ax=None, plot_scatter=True, plot_box_estimate=False, marker_size=24,
              place_legend=True, add_axis_labels=True, exclude=None, zorder=-5, annotate=False,
              facecolor='lightgray', edgecolor='gray', legend_out_of_frame=True, **kwargs):
+        """
+        plots the underlying data set in `ax`, if specified. Other parameters controll the appearance.
+        """
         if ax is None:
             ax = plt.gca()
 
@@ -165,6 +225,14 @@ class GenericDataSet(DataSet):
         super().set_axes_ranges(ax)
 
     def box_estimate(self, print_result=False, exclude=None):
+        """
+        returns a simple box estimates based on the ranges of the data points
+
+        Parameters:
+        -----------
+        print_result: print dimensions of that box
+        exclude: exclude specified constraints
+        """
         result = dict()
         for dim in ("rho0", "E/A"):
             df = self.get_data_frame(exclude=exclude)[dim]
@@ -182,13 +250,23 @@ class GenericDataSet(DataSet):
 
 
 class NormDistDataSet(DataSet):
+    """
+    class representing normally distributed constraints on the saturation point 
+    """
     def __init__(self, set_specifier):
+        """
+        initializes class with name `set_specifier`
+        """
         filenames, data = self.get_data(set_specifier)
         super().__init__(set_specifier=set_specifier, filenames=filenames)
         self.data_frame = data
 
     @staticmethod
     def get_data(set_specifier):
+        """
+        returns files and data (in that order) corresponding to the set of constraints
+        defined by `set_specifier`: "fsu_rmf" and "reinhard"
+        """
         data = []; labels = []
         if set_specifier == "fsu_rmf":
             files = sorted(glob.glob("data/Piekarewicz/*/CovEllipse.com"))
@@ -212,12 +290,19 @@ class NormDistDataSet(DataSet):
 
     @staticmethod
     def from_row_to_mean_cov(row):
+        """
+        converts a row in the data file to a mean and covariance matrix
+        returns extracted mean vector and covariance matrix (in that order)
+        """
         mean = row[["mean rho0", "mean E/A"]].to_numpy()
         offdiag = row["sigma rho0"] * row["sigma E/A"] * row["rho"]
         cov = np.array([[row["sigma rho0"]**2, offdiag], [offdiag, row["sigma E/A"]**2]])
         return mean, cov
 
     def sample(self, df=None, num_points=1, replace=True, exclude=None, random_state=None):
+        """
+        chooses `num_points` distributions (with/without replacement) and draws one sample each
+        """
         data = self.get_data_frame(exclude=exclude)
         data.reset_index()
         counts = data.sample(num_points, replace=replace, random_state=random_state).index.value_counts()
@@ -245,6 +330,9 @@ class NormDistDataSet(DataSet):
 
     def plot(self, ax=None, level=0.95, marker_size=8, add_legend=True,
              add_axis_labels=True, exclude=None, **kwargs):
+        """
+        plots the confidence ellipses at the `level` in `ax`
+        """
         if ax is None:
             ax = plt.gca()
         for irow, row in self.get_data_frame(exclude=exclude).iterrows():
@@ -272,13 +360,23 @@ class NormDistDataSet(DataSet):
 
 
 class KernelDensityEstimate(DataSet):
+    """
+    implements constraints given as samples from posterior distribution, 
+    using Kernel Density Estimation (KDE)
+    """
     def __init__(self, set_specifier=None):
+        """
+        initializes the class with `set_specifier`: e.g., `schunck` and `giuliani`
+        """
         filenames, data = self.get_data(set_specifier)
         super().__init__(set_specifier=set_specifier, filenames=filenames)
         self.data_frame = data
 
     @staticmethod
     def get_data(set_specifier):
+        """
+        retuns the constraints corresponding to `set_specifier`
+        """
         if set_specifier == "schunck":
             files = glob.glob("data/Schunck/samples?.csv")
             delimiter = ","
@@ -328,6 +426,9 @@ class KernelDensityEstimate(DataSet):
         return files, data
 
     def sample(self, df=None, num_points=1, replace=True, exclude=None, random_state=None):
+        """
+        samples `num_points` with or without replacment and excluded constraints
+        """
         data = self.get_data_frame(exclude=exclude)
         class_lbl = pd.DataFrame(data["class"].unique(), columns=["class"])
         counts = class_lbl.sample(num_points, replace=replace, random_state=random_state).index.value_counts()
@@ -351,6 +452,10 @@ class KernelDensityEstimate(DataSet):
 
     def plot(self, ax=None, level=0.95, fill=False, plot_scatter=False, marker_size=8,
              add_legend=True, add_axis_labels=True, exclude=None, use_seaborn=True, **kwargs):
+        """
+        plots the constraints using searborn, if `use_seaborn`, and otherwise `corner`:
+        seaborn's `kdeplot()` seems to have issues with displaying the handles in legends.
+        """
         if ax is None:
             ax = plt.gca()
 
@@ -425,10 +530,16 @@ class KernelDensityEstimate(DataSet):
 
 @dataclass
 class Scenario:
+    """
+    class to manage different DFT mixing scenarios, i.e., which data model classes to be considered
+    """
     label: str
     datasets: list
 
     @property
     def label_plain(self):
+        """
+        returns version of the label for file names
+        """
         return self.label.replace(" ", "-").lower()
 #%%

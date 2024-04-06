@@ -38,7 +38,19 @@ drischler_satbox = GenericDataSet(
 
 
 class SaturationAnalysis:
+    """
+    implements our Bayesian mixture model with ordinary MC sampling (highest level)
+    """
     def __init__(self, prestore_eft_fit=False, pdf_output_path="./pdf", samples_output_path="./samples"):
+        """
+        initializes the class
+
+        Parameters:
+        -----------
+        prestore_eft_fit: perform Coester Band fit upon initialization
+        pdf_output_path: sets path to output folder for pdfs 
+        samples_output_path: sets path to output folder for samples
+        """
         self.pdf_output_path = pdf_output_path
         self.samples_output_path = samples_output_path
         for path in (pdf_output_path, samples_output_path):
@@ -49,6 +61,19 @@ class SaturationAnalysis:
 
     def plot_constraints(self, dft_constraints=None, eft=False, dft_conf_level=0.95,
                          eft_conf_level=0.95, eft_plot_scatter=True, add_svm=True):
+        """
+        plots `dft_constraints` if not None otherwise plots default DFT constraints and 
+        EFT constraints if requested (EFT-DFT comparison figure)
+        
+        Parameters:
+        -----------
+        dft_constraints: to-be-plotted DFT constraints (default constraints will be used if none)
+        eft: toggle whether to plot EFT constraints
+        dft_conf_level: confidence level at which to plot DFT constraints
+        eft_conf_level: confidence level at which to plot EFT constraints
+        eft_plot_scatter: plot all EFT constraints
+        add_svm: train and plot support vector machine classifier
+        """
         pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.pdf_output_path}/constraints.pdf")
         fig, ax = plt.subplots(1, 1, figsize=(1.25*6.8*cm, 1.3*6.8*cm))
         self.drischler_satbox.plot(ax=ax, plot_scatter=False, plot_box_estimate=True, marker_size=8,
@@ -116,6 +141,16 @@ class SaturationAnalysis:
         # return fig, ax
 
     def plot_individual_models(self, num_points=3000, dft_constraints=None, prior_params=None):
+        """
+        plots `dft_constraints` if not None otherwise plots default DFT constraints and 
+        EFT constraints if requested (EFT-DFT comparison figure)
+        
+        Parameters:
+        -----------
+        num_points: whether to plot EFT constraints
+        dft_constraints: to-be-plotted DFT constraints (default constraints will be used if none)
+        prior_params: confidence level at which to plot DFT constraints
+        """
         dft_constraints = DEFAULT_DFT_CONSTRAINTS if dft_constraints is None else dft_constraints
         for lbl, val in tqdm(dft_constraints.items(), desc="Iterating over DFT constraints"):
             scenario = Scenario(label=f"{lbl}-only", datasets=[val])
@@ -125,6 +160,17 @@ class SaturationAnalysis:
     @staticmethod
     def __sample_dft_realizations(datasets, num_realizations, num_pts_per_dft_model, sample_replace,
                                   random_state=None):
+        """
+        creates DFT realizations by sampling from all distribution functions
+        
+        Parameters:
+        -----------
+        datasets: data sets to be accounted for
+        num_realizations: number of requested realizations
+        num_pts_per_dft_model: requested number of points per DFT model
+        sample_replace: sample with or without replacement
+        random_state: sets random state (for reproducibility)
+        """
         num_points = num_realizations*num_pts_per_dft_model
         use_kwargs = dict(df=None, replace=sample_replace,
                           random_state=random_state,
@@ -141,6 +187,20 @@ class SaturationAnalysis:
     @staticmethod
     def sample_mix_models_batch(batch_size, num_pts_per_dft_model, sample_replace, scenario,
                                 quantities, prior_params, num_samples_mu_Sigma, file_prefix):
+        """
+        samples mixture models in parallel
+
+        Parameters:
+        -----------
+        batch_size: number of realizations per batch 
+        num_pts_per_dft_model: number of points per DFT model
+        sample_replace: sample with or without replacement
+        scenario: DFT scenario (which DFT model classes)
+        quantities: defines quantities to samples (e.g., n0, E0)
+        prior_params: set the prior hyperparameter (dict) 
+        num_samples_mu_Sigma: requested number per samples mu, Sigma
+        file_prefix: prefix to be used for output files
+        """
         # step 0: init random number generator for parallel computing (pass job id along with batch_size)
         # to ensure the results are reproducible (and not completely random)
         global rng_global, worker_id, root_seed
@@ -176,6 +236,18 @@ class SaturationAnalysis:
 
     @staticmethod
     def sample_from_model(data, quantities, prior_params, num_samples_mu_Sigma, random_state, file_prefix):
+        """
+        creates a StatisticalModel from `data` and samples from it
+
+        Parameters:
+        -----------
+        data: raw DFT data (used as input for initializing the `StatisticalModel`)
+        quantities: defines quantities to samples (e.g., n0, E0) 
+        prior_params: set the prior hyperparameter (dict) 
+        num_samples_mu_Sigma: requested number per samples mu, Sigma 
+        random_state: sets random state for reproducibility
+        file_prefix: prefix to be used for output files
+        """
         i_iter, data = data
         model = StatisticalModel(data=data, quantities=quantities, prior_params=prior_params)
         # diagnostics: plot predictive posterior of the trained model
@@ -206,6 +278,28 @@ class SaturationAnalysis:
                    levels=None, quantities=None, prior_params=None, bins=120, debug=True, pdf=None,
                    plot_fitted_conf_regions=True, plot_iter_results=False, store_samples=True,
                    req_num_workers=10, num_batch_per_worker=1, num_samples_mu_Sigma=10):
+        """
+        performs ordinary MC iteration for a given DFT `scenario`
+
+        Parameters:
+        -----------
+        scenario: DFT scenario defining the DFT models to be considered, 
+        num_realizations: number of DFT realizations to be used
+        num_pts_per_dft_model: number of points per model requested
+        sample_replace: sample with or without replacement
+        levels: confidence level
+        quantities: quantities to to inferrence for (i.e., n0, E0)
+        prior_params: hyperparameter for the prior distribution
+        bins: number of bins for histogram
+        debug: toggle whether to print debugging info
+        pdf: PDF file to export figures to
+        plot_fitted_conf_regions: plot confidence regions of fitted distributions
+        plot_iter_results: toggle whether to plot the results for each iteration
+        store_samples: toggle whether to store all samples
+        req_num_workers: number of workers for parallel evaluation requested
+        num_batch_per_worker: specifies the number of batches per worker
+        num_samples_mu_Sigma: number of mu, Sigma requested
+        """
         ct = time.perf_counter()
         # step 1: determine batch sizes
         max_num_workers = cpu_count()//2
@@ -251,6 +345,22 @@ class SaturationAnalysis:
 
     def plot_samples(self, samples, debug, levels, bins, prior_params, plot_fitted_conf_regions, 
                      file_output, store_samples=True, add_info=None, pdf=None):
+        """
+        plot `samples`
+        
+        Parameters:
+        -----------
+        samples: samples to be plotted
+        debug: enables/disables debugging info
+        levels: confidence level
+        bins: number of bins
+        prior_params: hyperparameters of prior (dict)
+        plot_fitted_conf_regions: toggle whether to plot fitted confidence regions
+        file_output: specifies output file
+        store_samples: toggle whetherh to store output samples
+        add_info: additional annotation in plot
+        pdf: specifies PDF file to be used for output
+        """
         use_level = 0.95
         names = ["predictive rho0", "predictive E/A"]
         labels = ['Sat. Density $n_0$ [fm$^{-3}$]', 'Sat. Energy $E_0$ [MeV]']
@@ -343,11 +453,23 @@ class SaturationAnalysis:
 
     @staticmethod
     def _get_mc_output_filename(kwargs):
+        """
+        returns file name for MC output given parameters specified in kwargs
+        """
         filename = f"pdf/mc_{kwargs['scenario'].label}_num_postersamples_{kwargs['num_samples_mu_Sigma']}_"
         filename += f"num_mciter_{kwargs['num_realizations']}_numworkers_{kwargs['req_num_workers']}.pdf"
         return filename
 
     def mc_run_scenario(self, scenario, used_prior_sets, results=None, **input_kwargs):
+        """
+        performs ordinary MC iteratively and tracks the results in multipe-page PDF
+
+        Parameters:
+        -----------
+        scenario: current scenario (realization of DFT constraints)
+        used_prior_sets: prior hyperparameters
+        results: dict to keep track of resulting fitted bivariate t-distributions
+        """
         dflt_kwargs = dict(
             scenario=scenario,
             num_realizations=1,
@@ -378,6 +500,14 @@ class SaturationAnalysis:
 
 
 def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
+    """
+    plots the NIW prior predictives defined by `prior_params_list` at confidence `levels`.
+    If `plot_satbox`, the empirical saturation box is plotted as a reference
+    Parameters:
+    -----------
+
+    prior_params_list, levels=None, plot_satbox=True
+    """
     prior_params_list = np.atleast_1d(prior_params_list)
     num_priors = len(prior_params_list)
 
@@ -416,6 +546,10 @@ def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
 
 
 def worker_init(status_msg=True):
+    """
+    initializes workers for parallel computing/sampling;
+    prints status message if `status_msg`
+    """
     global worker_id, rng_global, root_seed
     worker_id = os.getpid()
     name = current_process().name

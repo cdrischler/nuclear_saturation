@@ -3,6 +3,23 @@ import pandas as pd
 
 
 def plot_GPB_coester(ax, pos, lam=500, n_std=2, color="blue", annotate=True):
+    """
+    creates a Coester plot for the nuclear saturation point based on the GP-B EFT constraints 
+
+    Parameters
+    ----------
+    ax : matplotlib axis
+    pos : position of the annotation if `annotate` is True
+    lam : 450 or 500 MeV momentum cutoffs available (int)
+    n_sdt: number of plotted std
+    color: color for the plotted error ellipses
+    annotate: whether or not to add annotations
+
+    Returns
+    -------
+    None
+    """
+
     if lam == 500:
         # Lambda 500 MeV
         mean = np.array([ 0.17014727, -14.2950795 ])
@@ -35,7 +52,22 @@ def plot_GPB_coester(ax, pos, lam=500, n_std=2, color="blue", annotate=True):
                     )
 
 
-def plot_coester_band(ax, data_sat, color="lightgray", shift=1.6):
+def plot_coester_band(ax, data_sat, color="lightgray", shift=1.6):   
+    """
+    plots the Coester band based on a simply linear fit to data and constant
+    shift of the fitted line to construct the band
+
+    Parameters
+    ----------
+    ax : matplotlib axis
+    data_sat : data set used for fitting (n0, E0)
+    color : color of the plotted band
+    shift: constant shift (offset) in both directions (+/-) to construct Coester Band
+
+    Returns
+    -------
+    None
+    """
     pars = np.polyfit(data_sat["n0"], data_sat["En0"], 1)
     fit = np.poly1d( pars )
     dens_plt = np.linspace(0.12, 0.21, 5)
@@ -45,6 +77,24 @@ def plot_coester_band(ax, data_sat, color="lightgray", shift=1.6):
 
 
 def make_coester_plot(fig, ax, emp_constraint=None, conf_level=None):
+    """
+    creates Coester Band figure will all theoretical constraints and with the
+    specified empirical constraint `emp_constraint`.
+
+    Parameters
+    ----------
+    fig, ax : matplotlib fig and ax
+    emp_constraint: empirical constraint to plot (dictionary ):
+        1. if "type" == "box" : the corresponding rectancle with "rho" specifying the tuple (central, error) value
+        for the saturation density, and likewise for "E/A" 
+        2. if "type" == "t": the coresponding bivariate t-distribution will be plotted, with `mu`, `Psi`, and `nu` paramters
+    conf_level : requested confidence level (decimal < 1)
+
+    Returns
+    -------
+    Nothing.
+    """
+
     # read Drischler et al. results
     data_sat = pd.read_csv("data/satpoints_predicted.csv", comment="#", skiprows=0, sep=',', header=0)
 
