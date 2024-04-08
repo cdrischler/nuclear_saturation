@@ -50,7 +50,7 @@ Run the following `pytest` command to test important components of the code (may
 pytest pytest tests.py
 ```
 
-### Optional: Brute-force Monte Carl
+### Optional: Brute-force Monte Carlo appraoch
 
 To run `saturation_analysis_mc.ipynb`, you will need a different virtual environment due to inter-package incompabilities:
 
@@ -66,7 +66,7 @@ jupyter-notebook&
 
 ## Cite this work
 
-Please use the following BibTex entry to cite our work:
+Please use the following BibTeX entry to cite our work:
 
 ```bibtex
 @manual{saturationGitHub,
