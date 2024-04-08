@@ -368,7 +368,8 @@ class SaturationAnalysis:
         labels = ['Sat. Density $n_0$ [fm$^{-3}$]', 'Sat. Energy $E_0$ [MeV]']
         fig, axs = plt.subplots(2, 2, figsize=(9*cm, 1.2*8.6*cm))
         data = az.from_dict(posterior={lbl: samples[lbl] for lbl in names})
-        corner.corner(data,  # var_names=names,
+        corner.corner(data, 
+                      var_names=names,
                       labels=labels,
                       quantiles=(0.5-use_level/2, 0.5+use_level/2),
                       verbose=debug,
