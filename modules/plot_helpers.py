@@ -332,9 +332,9 @@ def plot_confregion_bivariate_t(mu, Sigma, nu, ax=None, alpha=None, alpha_unit="
 
             # check radius r0 and corresponding confidence interval
             X = samples-mu
-            est_conf = np.sum(np.einsum('ij,jk,ik->i', X, invSigma, X) <= r0i**2)/len(samples)
+            est_conf = np.sum(np.einsum('ij,jk,ik->i', X, invSigma, X, optimize=True) <= r0i**2)/len(samples)
             X = conf_ellipse-mu
-            dev = np.linalg.norm((np.einsum('ij,jk,ik->i', X, invSigma, X) - r0i**2), ord=np.inf)
+            dev = np.linalg.norm((np.einsum('ij,jk,ik->i', X, invSigma, X, optimize=True) - r0i**2), ord=np.inf)
 
             err_radius = (np.abs(est_conf-alpha[ir0i]) > radius_tol)
             err_ellipse = (dev > ellipse_tol)

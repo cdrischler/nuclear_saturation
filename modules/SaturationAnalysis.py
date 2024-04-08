@@ -503,10 +503,12 @@ def visualize_priors(prior_params_list, levels=None, plot_satbox=True):
     """
     plots the NIW prior predictives defined by `prior_params_list` at confidence `levels`.
     If `plot_satbox`, the empirical saturation box is plotted as a reference
+
     Parameters:
     -----------
-
-    prior_params_list, levels=None, plot_satbox=True
+    prior_params_list: array of prior hyperparameters (dicts)
+    levels: confidence level used for plotting
+    plot_satbox: toggle whether to plot the empirical saturation box as a reference
     """
     prior_params_list = np.atleast_1d(prior_params_list)
     num_priors = len(prior_params_list)

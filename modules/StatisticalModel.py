@@ -84,7 +84,7 @@ class StatisticalModel:
     def posterior_params(self):
         """
         Parameters of the posterior distribution; both the posterior and prior are normal inverse-Wishart distributions
-        For the analytic expressions, see
+        For the analytic expressions, see our manuscript and, e.g.:
             * https://en.wikipedia.org/wiki/Normal-inverse-Wishart_distribution#Posterior_distribution_of_the_parameters
             * Equations (250) through (254) in Murphy's notes: https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf
             * page 73 (pdf page 83) in Gelman et al.'s book: http://www.stat.columbia.edu/~gelman/book/BDA3.pdf
@@ -544,7 +544,7 @@ def latex_it(posterior, sep = "-"*50, title=None,
     if title is not None:
         print(title)
     if np.all([elem in ps.keys() for elem in ("mu", "cov")]):
-        # fit normal distributino for (Sv,L)
+        # fit normal distribution for (Sv,L)
         print(f"{ps['mu'][0]:.3f} \\\\ {ps['mu'][1]:.2f}")
         offdiag =  np.sqrt(np.abs(ps['cov'][0,1])) * np.sign(ps['cov'][0,1])
         print(f"{np.sqrt(ps['cov'][0,0]):.3f}^2 & {offdiag:.3f}^2 \\\\ {offdiag:.3f}^2 & {np.sqrt(ps['cov'][1,1]):.2f}^2")
