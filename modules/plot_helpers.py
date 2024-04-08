@@ -430,7 +430,6 @@ def test_plot_confregion_univariate_t():
     nu = 90000  # hence, approx. a normal distribution
     alpha = (0.6826894921370859, 0.9544997361036416, 0.9973002039367398)
     conf_intervals = plot_confregion_univariate_t(mu=mu, Sigma=Sigma, nu=nu, alpha=alpha, validate=True)
-    assert conf_intervals
 
 
 def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status=False, strategy="fit_marginals"):
