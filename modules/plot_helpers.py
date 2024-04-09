@@ -432,14 +432,21 @@ def test_plot_confregion_univariate_t():
     conf_intervals = plot_confregion_univariate_t(mu=mu, Sigma=Sigma, nu=nu, alpha=alpha, validate=True)
 
 
-def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status=False, strategy="fit_marginals"):
+def fit_bivariate_t(data, alpha_fit="auto", nu_limits=None, tol=1e-4, print_status=False, strategy="count_samples"):
     """
-    optimizes a bivariate t-distribution to samples in `data` 
+    optimizes a bivariate t-distribution to samples in `data` following one of two stratgies:
+
+    1) "fit_marginals": uses `scipy.stats.rv_continuous.fit()` to fit the (univariate) marginal 
+    distributions (relatively slow)
+    2) "else": fits the confidence region associated with `alpha_fit` (decimal) by brute-force 
+    counting samples (faster)
 
     Parameters
     ----------
     data : array with (x,y) samples
-    alpha_fit : confidence level at which to optimize
+    alpha_fit : confidence level at which to optimize 
+        * if array-like, the fit will performed for all of them, and the most frequent dof will be used
+        * if "auto", a pre-defined array will be used instead
     nu_limits : limits (lower, upper) of the dof nu
     tol: requested tolerance of the fit
     plot_hist: specifies whether or not to plot a histogram after smapling
@@ -451,15 +458,16 @@ def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status
     -------
     dictionary specifying the parameters of the optimized bivariate t-distribution
     """
-        
+    cov_est = np.cov(data[:, 0], data[:, 1])
     if strategy == "fit_marginals":
         from scipy.stats import t
         nu_first, mean_first, std_first = t.fit(data=data[:,0])
-        nu_second, mean_second, std_second = t.fit(data=data[:,1])
-        nu_est = np.mean([nu_first, nu_second])
+        nu_second, mean_second, std_second = t.fit(data=data[:,1]) 
+        # fit in density seems more robust than the one in the energy
+        nu_est = np.rint(np.min([nu_first, nu_second]))  # use the minimum dof per choice
         mu_est = [mean_first, mean_second]
-        Psi_est = np.cov(data[:,0],data[:,1]) * (nu_est-2)/nu_est
-    else:  # count samples
+        Psi_est = cov_est * (nu_est-2)/nu_est
+    elif strategy == "count_samples": 
         if nu_limits is None:
             nu_limits = (3, 40)
 
@@ -467,7 +475,6 @@ def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status
         mu_est = data.mean(axis=0)
 
         # estimate scale matrix (from covariance matrix)
-        cov_est = np.cov(data[:, 0], data[:, 1])
         inv_cov_est = np.linalg.inv(cov_est)
 
         def metric(nu, alpha):
@@ -481,14 +488,25 @@ def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status
             # alpha_est_no_inv = np.sum(np.einsum('ij,ji->i', X, np.linalg.solve(cov_est, X.T)) <= rhs)/len(data)
             return alpha_est - alpha
         try:
-            nu_est = optimize.bisect(metric, nu_limits[0], nu_limits[1], args=(alpha_fit,), xtol=tol)
+            if alpha_fit == "auto":
+                alpha_fit = np.arange(0.35, 0.95, 0.1)
+            else:
+                alpha_fit = np.atleast_1d(alpha_fit)
+            nu_est_arr = np.empty_like(alpha_fit, dtype=np.int32)
+            for iafit, afit in enumerate(alpha_fit):
+                nu_est = optimize.bisect(metric, nu_limits[0], nu_limits[1], args=(afit,), xtol=tol)
+                nu_est_arr[iafit] = np.rint(nu_est)
+            nu_est = np.argmax(np.bincount(nu_est_arr))  # nu is bound by `nu_limits`
             Psi_est = cov_est * (nu_est-2) / nu_est
         except ValueError as e:
             print(f"fit of a bivariate t distribution with finite dof in ({nu_limits}) failed: '{str(e)}'")
             print("assuming Normal distribution instead")
             nu_est = np.inf
             Psi_est = cov_est
-    return {"mu": mu_est, "Psi": Psi_est, "nu": np.rint(nu_est)}
+    else:
+        raise ValueError(f"fit strategy '{strategy}' is unknown.")
+
+    return {"mu": mu_est, "Psi": Psi_est, "nu": nu_est}
 
 
 def test_fit_bivariate_t(df=7, M=None, mu=None, size=10000000, tol=1e-3, print_status=True):
