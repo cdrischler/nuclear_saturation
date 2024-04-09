@@ -338,7 +338,7 @@ class SaturationAnalysis:
         if levels is None:
             levels = np.array((0.5, 0.8, 0.95, 0.99))
         levels = np.atleast_1d(levels)
-        file_output = f"{self.pdf_output_path}/mc_output_{req_num_workers}_{scenario.label_plain}_"
+        file_output = f"{self.pdf_output_path}/mc_output_num_workers_{req_num_workers}_{scenario.label_plain}_"
         file_output += f"{label_filename(prior_params['label'])}_num_postersamples_{num_samples_mu_Sigma}"
         file_output += f"_num_mciter_{num_realizations}.pdf"
         fit = self.plot_samples(samples=samples, levels=levels, bins=bins, store_samples=store_samples,
@@ -359,7 +359,7 @@ class SaturationAnalysis:
         bins: number of bins
         prior_params: hyperparameters of prior (dict)
         plot_fitted_conf_regions: toggle whether to plot fitted confidence regions
-        file_output: specifies output file
+        file_output: specifies output location for the PDF file
         store_samples: toggle whetherh to store output samples
         add_info: additional annotation in plot
         pdf: specifies PDF file to be used for output
@@ -446,11 +446,7 @@ class SaturationAnalysis:
 
         # store samples if requested
         if store_samples:
-            if pdf_not_provided:
-                filename = file_output
-            else:
-                filename = pdf._file.fh.name
-            filename = filename.replace("mc_output", "samples").replace(".pdf", ".h5").replace("pdf/", f"{self.samples_output_path}/")
+            filename = file_output.replace("mc_output", "samples").replace(".pdf", ".h5").replace("./pdf/", f"{self.samples_output_path}/")
             samples.to_hdf(filename, key='samples', mode='w', complevel=6)
             print(f"Samples written to '{filename}'.")
         return fit
