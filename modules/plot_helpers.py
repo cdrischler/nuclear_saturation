@@ -476,6 +476,9 @@ def fit_bivariate_t(data, alpha_fit=0.68, nu_limits=None, tol=1e-2, print_status
             rhs = ((nu - 2)/nu) * (nu/(1-alpha)**(2/nu) - nu)  # note that this includes the radius squared!
             X = data - mu_est
             alpha_est = np.sum(np.einsum('ij,jk,ik->i', X, inv_cov_est, X) <= rhs)/len(data)
+            # this can also be evaluated without computing the inverse of the covariance matrix explicitly,
+            # but because of the integer sum it makes virtually no difference, even for near-semi-definite matrices
+            # alpha_est_no_inv = np.sum(np.einsum('ij,ji->i', X, np.linalg.solve(cov_est, X.T)) <= rhs)/len(data)
             return alpha_est - alpha
         try:
             nu_est = optimize.bisect(metric, nu_limits[0], nu_limits[1], args=(alpha_fit,), xtol=tol)
