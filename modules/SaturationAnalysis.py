@@ -440,7 +440,7 @@ class SaturationAnalysis:
             print(f"Writing results to '{file_output}'")
         pdf.savefig(fig)
         plt.close(fig=fig)
-        print(fit)
+
         if pdf_not_provided:
             pdf.close()
 
