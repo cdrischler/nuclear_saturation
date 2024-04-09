@@ -92,6 +92,7 @@ class SaturationAnalysis:
             pdf.savefig(fig)
         if eft:
             if self.eft_predictions is None:
+                from EftPredictions import EftPredictions
                 self.eft_predictions = EftPredictions(show_result=True)
             self.eft_predictions.plot(ax=ax, level=eft_conf_level, plot_scatter=eft_plot_scatter)
             pdf.savefig(fig)
