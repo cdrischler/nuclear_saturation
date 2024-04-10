@@ -297,7 +297,8 @@ class SaturationAnalysis:
         debug: toggle whether to print debugging info
         pdf: PDF file to export figures to
         plot_fitted_conf_regions: plot confidence regions of fitted distributions
-        plot_iter_results: toggle whether to plot the results for each iteration
+        plot_iter_results: toggle whether to plot the results for each iteration 
+        (only available for small number of realizations to large PDF files with figures)
         store_samples: toggle whether to store all samples
         req_num_workers: number of workers for parallel evaluation requested
         num_batch_per_worker: specifies the number of batches per worker
@@ -468,7 +469,8 @@ class SaturationAnalysis:
         -----------
         scenario: current scenario (realization of DFT constraints)
         used_prior_sets: prior hyperparameters
-        results: dict to keep track of resulting fitted bivariate t-distributions
+        results: dict to keep track of resulting fitted bivariate t-distributions, 
+        will be populated by this function with the inferred results
         """
         dflt_kwargs = dict(
             scenario=scenario,
@@ -486,6 +488,8 @@ class SaturationAnalysis:
         print("Using the following configuration:")
         for key, val in kwargs.items():
             print(f"{key}: {val}")
+        print("")
+        
         filename=self._get_mc_output_filename(kwargs)
         # print(f"writing to '{filename}'")
         pdf = matplotlib.backends.backend_pdf.PdfPages(filename=filename)
