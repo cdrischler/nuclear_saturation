@@ -407,7 +407,6 @@ class KernelDensityEstimate(DataSet):
         data = []
         for file in sorted(files):
             data_read = pd.read_csv(file, comment="#", names=column_names, skiprows=0, delimiter=delimiter)
-            data_read["file"] = file
             if set_specifier == "giuliani":
                 data_read = pd.DataFrame(data={"rho0": calc_density(data_read["kf"]),
                                                "E/A": data_read["E/A"]})
@@ -418,7 +417,8 @@ class KernelDensityEstimate(DataSet):
                 id = 1
             else:
                 raise ValueError(f"unknown `set_specifier` '{set_specifier}'")
-
+         
+            data_read["file"] = file
             data_read["class"] = set_specifier  # f"{set_specifier}:{id}"
             data_read["label"] = data_read["class"]
             data.append(data_read)
