@@ -6,8 +6,6 @@ This repository supplements our manuscript in preparation.
 
 We aim to provide statistically meaningful constraints on the nuclear saturation point to benchmark (and guide the construction of novel) microscopic interaction derived from chiral effective field theory (EFT). 
 
-Kevin P. Murphy's notes on [Conjugate Bayesian analysis of the Gaussian distribution](https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf) were helpful to us.
-
 
 ## Overview
 
