@@ -475,7 +475,8 @@ class StatisticalModel:
 
             # There's a bug in `corner` version 2.2.1. The title will always show
             # the default `quantiles=[0.16, 0.5, 0.84]`. This was already reported in
-            # https://github.com/dfm/corner.py/issues/107 .
+            # https://github.com/dfm/corner.py/issues/107 . The bug seems to be fixed
+            # in the current version of `corner`.
 
             for ind in range(2):
                 mu = np.mean(data[:, ind])
