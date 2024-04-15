@@ -36,7 +36,7 @@ NNLOsim 550/290 MeV,sim 550,0.169839357,-15.06797041,MBPT,4,10,Drischler et al. 
 Holt 414,Holt 414,0.195,-17.82,MBPT*,3,11,Holt and Kaiser (2017),,
 Holt 450,Holt 450,0.197,-18.28,MBPT*,3,12,Holt and Kaiser (2017),,
 Holt 500,Holt 500,0.162,-13.17,MBPT*,3,13,Holt and Kaiser (2017),,
-NNLOsat,NNLOsat,0.165613,-14.60395,CC,-1,14,Ekström et al. (2015),,
+# NNLOsat,NNLOsat,0.165613,-14.60395,CC,-1,14,Ekström et al. (2015),,
 $\Delta$NNLOGO(394),$\Delta$NNLO$_\text{GO}$ 394,0.16283,-15.37854,CC,-1,15,Jiang et al. (2019),,
 $\Delta$NNLOGO(450),$\Delta$NNLO$_\text{GO}$ 450,0.16868,-15.79561,CC,-1,16,Jiang et al. (2019),,
 $\Delta$NLOGO(450),$\Delta$NLO$_\text{GO}$ 450,0.17161,-15.63415,CC,-1,17,Jiang et al. (2019),,
