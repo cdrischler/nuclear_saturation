@@ -278,7 +278,7 @@ class SaturationAnalysis:
         return pd.DataFrame(data={"predictive rho0": tmp[:, 0], "predictive E/A": tmp[:, 1]})
 
     def mc_iterate(self, scenario=None, num_realizations=1000000, num_pts_per_dft_model=1, sample_replace=True,
-                   levels=None, quantities=None, prior_params=None, bins=120, debug=True, pdf=None,
+                   levels=None, quantities=None, prior_params=None, bins=200, debug=True, pdf=None,
                    plot_fitted_conf_regions=True, plot_iter_results=False, store_samples=True,
                    req_num_workers=10, num_batch_per_worker=1, num_samples_mu_Sigma=10):
         """
