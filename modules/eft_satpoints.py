@@ -52,10 +52,10 @@ def plot_GPB_coester(ax, pos, lam=500, n_std=2, color="blue", annotate=True):
                     )
 
 
-def plot_coester_band(ax, data_sat, color="lightgray", shift=1.6):   
+def plot_coester_band(ax, data_sat, color="lightgray", plot_central=False):   
     """
-    plots the Coester band based on a simply linear fit to data and constant
-    shift of the fitted line to construct the band
+    plots the Coester band based on a simply linear fit to data. The width of the band
+    is determined by the minimum width that contains all data points. 
 
     Parameters
     ----------
@@ -68,12 +68,34 @@ def plot_coester_band(ax, data_sat, color="lightgray", shift=1.6):
     -------
     None
     """
-    pars = np.polyfit(data_sat["n0"], data_sat["En0"], 1)
-    fit = np.poly1d( pars )
+    fit = np.poly1d(np.polyfit(data_sat["n0"], data_sat["En0"], 1))
     dens_plt = np.linspace(0.12, 0.21, 5)
-    ens_plt = fit( dens_plt )
-    ax.fill_between(dens_plt, ens_plt-shift, ens_plt+shift,
+
+    # mask for all saturation points located above the fit
+    mask = (data_sat["En0"] - fit(data_sat["n0"])) > 0.
+ 
+    # determine the saturation point that dertermine the upper and lower
+    # limit of the band, given the slope from the fit
+    def get_boundary(data):
+        # projects the saturation points in `data` onto the linear fit;
+        # it's the solution of minimizing the Euclidean distance of the
+        # computed saturation points and the set of points described 
+        # by the linear fit
+        dist = np.abs(fit.coeffs[1] - data["En0"] + fit.coeffs[0] * data["n0"]) / np.sqrt(1 + fit.coeffs[0]**2)
+        return data.iloc[np.argmax(dist)]
+
+    lower = get_boundary(data_sat[~mask])
+    upper = get_boundary(data_sat[mask])
+ 
+    def model(data_pt, n):
+        return data_pt["En0"] + fit.coeffs[0] * (n - data_pt["n0"])  
+ 
+    ax.fill_between(dens_plt, model(lower, dens_plt), model(upper, dens_plt),
                     color=color, alpha=1, zorder=0)
+    
+    if plot_central:
+        ax.plot(dens_plt, fit(dens_plt), color="darkgray", ls="--", alpha=1, zorder=0)
+
 
 
 def make_coester_plot(fig, ax, emp_constraint=None, conf_level=None):
