@@ -156,6 +156,7 @@ def make_coester_plot(fig, ax, emp_constraint=None, conf_level=None):
     plot_GPB_coester(ax, (0.176, -12.6-0.55), lam=450, color=colors_alt2[1])
 
     # plot MBPT results (Drischler et al. and Holt et al.)
+    kwargs = {"zorder": 8, "markeredgewidth": 0.5, "markeredgecolor": '0.'}
     for index, row in data_sat.iterrows():
         # plot only Drischler et al.'s results at order 4
         if (row["mbpt_order"] != 4) and (row["method"] == "MBPT"):
@@ -165,9 +166,6 @@ def make_coester_plot(fig, ax, emp_constraint=None, conf_level=None):
         color = colors_alt2[row["set_id"]]
         marker = latex_markers[row["mbpt_order"]-1]
 
-        kwargs = {"zorder": 5} if row["method"] == "CC" else {"zorder": 8,
-                                                             "markeredgewidth": 0.5,
-                                                             "markeredgecolor": '0.'}
         # plot result
         ax.plot(row['n0'], row['En0'],
                 marker=marker,
