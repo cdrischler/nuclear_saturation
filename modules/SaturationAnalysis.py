@@ -35,6 +35,27 @@ drischler_satbox = GenericDataSet(
 )
 # drischler_satbox = DEFAULT_DFT_CONSTRAINTS["dutra_skyrme"] + DEFAULT_DFT_CONSTRAINTS["kortelainen"]
 
+scenario1 = Scenario(
+    label="fsu-only",
+    datasets=[DEFAULT_DFT_CONSTRAINTS["fsu_rmf"]]
+)
+scenario2 = Scenario(
+    label="fsu+Schunck-only",
+    datasets=[DEFAULT_DFT_CONSTRAINTS["fsu_rmf"], DEFAULT_DFT_CONSTRAINTS["schunck"]]
+)
+scenario3 = Scenario(
+    label="all-but-fsu",
+    datasets=[DEFAULT_DFT_CONSTRAINTS[lbl] for lbl in DEFAULT_DFT_CONSTRAINTS.keys() if lbl != "fsu_rmf"]
+)
+scenario4 = Scenario(
+    label="Giuliani+Schunck-only",
+    datasets=[DEFAULT_DFT_CONSTRAINTS["giuliani"], DEFAULT_DFT_CONSTRAINTS["schunck"]]
+)
+scenario5 = Scenario(
+    label="Skyrme-only",
+    datasets=[DEFAULT_DFT_CONSTRAINTS[lbl] for lbl in DEFAULT_DFT_CONSTRAINTS.keys() if "rmf" not in lbl and "giuliani" not in lbl ]
+)
+
 
 class SaturationAnalysis:
     """
