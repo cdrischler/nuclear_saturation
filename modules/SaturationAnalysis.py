@@ -446,8 +446,8 @@ class SaturationAnalysis:
 
         # fit bivariate t distribution to samples; only accurate for large numbers of sampling points
         from plot_helpers import fit_bivariate_t
-        fit = fit_bivariate_t(samples[names].to_numpy(), alpha_fit=0.68, nu_limits=(3, 60),
-                                  tol=1e-3, print_status=debug)
+        fit = fit_bivariate_t(samples[names].to_numpy(), alpha_fit="auto", nu_limits=(3, 60),
+                              tol=1e-3, print_status=debug)
 
         if plot_fitted_conf_regions:
             from plot_helpers import plot_confregion_bivariate_t
