@@ -97,6 +97,18 @@ def plot_coester_band(ax, data_sat, color="lightgray", plot_central=False):
         ax.plot(dens_plt, fit(dens_plt), color="darkgray", ls="--", alpha=1, zorder=0)
 
 
+def set_ax_title(ax, prior_set_lbl, res_lbl):
+    """
+    helper function to set readable titles in the Coester plots
+    """
+    humanize_label = {
+        "satbox": "Dutra+ (\'12) \& Kortelainen+",
+        "satbox_wo_SQMC700": "Dutra+$^*$ (\'12) \&  Kortelainen+",
+        "Skyrme-only": "Skyrme-only",
+        "all-but-fsu": "Skyrme+RMF"
+    }
+    ax.set_title(f"{humanize_label[res_lbl]}: {prior_set_lbl}")  # , fontsize=8)
+
 
 def make_coester_plot(fig, ax, emp_constraint=None, conf_level=None):
     """
