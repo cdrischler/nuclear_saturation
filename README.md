@@ -13,13 +13,14 @@ We aim to provide statistically meaningful constraints on the nuclear saturation
 The repository is organized as follows:
 * `data`: contains all DFT and EFT data files, with author and other relevant information
 * `modules`: contains classes, functions, and more relevant to our analysis. It also provides a function to calculate and plot confidence regions of the bivariate t-distribution analytically. See the Appendices in our manuscript for more details.
-* `samples`: contains sample of the symmetry energy and its slope parameter obtained using BUQEYE's EFT truncation error repository
+* `samples`: contains samples of the symmetry energy and its slope parameter obtained using BUQEYE's EFT truncation error repository as well as all other files containing samples
 * `pdf`: contains the figures generated in the PDF format
+* `logo`: contains the files for this project's logo
 
 The following Jupyter notebooks are included:
-* `analysis_conjugate_priors.ipynb`: performs the conjugate prior analysis presented in the manuscript. The notebook supports parallel computing.
+* `analysis_conjugate_priors.ipynb`: performs the conjugate prior analysis presented in the manuscript. The notebook supports parallel computing. Downloading the samples from Giuliani et al. requires an internet connection and might take a while to finish. This has to be done only once.
 * `tutorial_conf_regions.ipynb`: provides a tutorial on plotting confidence regions of the t-distribution using the tools developed.
-* `sample_SV_L.ipynb`: derives constraints on the nuclear symmetry energy parameters $(S_v,L)$ from chiral EFT calculations in pure neutron matter combined with empirical constraints on the nuclear saturation point. It interfaces with the BUQEYE repository containing their [nuclear matter analysis](https://github.com/buqeye/nuclear-matter-convergence).
+* `sample_SV_L.ipynb`: derives constraints on the nuclear symmetry energy parameters $(S_v,L)$ from chiral EFT calculations in pure neutron matter combined with empirical constraints on the nuclear saturation point. It requires and interfaces with the public BUQEYE GitHub repository containing their [nuclear matter analysis](https://github.com/buqeye/nuclear-matter-convergence).
 * `tests.py` defines several unit test (see below)
 
 In addition, `saturation_analysis_mc.ipynb` provides an independent implementation of our saturation analysis using brute-force Monte Carlo sampling. It could be used to check and generalize our analysis using conjugate priors. Another virtual environment with packages specified in `requirements_mc.txt` needs to be installed following the instructions above. This notebook was _not_ used in our manuscript.
@@ -80,8 +81,12 @@ Please use the following BibTeX entry to cite our work:
 
 ## Contact details
 
-Christian Drischler (drischler@ohio.edu)  
+Christian Drischler (<drischler@ohio.edu>)  
 Department of Physics and Astronomy   
-Lindley Hall S219  
 Ohio University  
-Athens, OH 45701  
+Athens, OH 45701, USA  
+
+Frederi Viens (<fv15@rice.edu>)   
+Department of Statistics   
+Rice University   
+Houston, TX 77005, USA   
