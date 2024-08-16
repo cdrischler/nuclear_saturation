@@ -43,8 +43,7 @@ class DataSet(ABC):
             brown="Brown (\'21)",
             dutra_rmf="Dutra et al. (\'14)"
         )
-        default_value = clbl[0].upper()
-        default_value = default_value.replace("_", " ")
+        default_value = clbl.capitalize().replace("_", " ")
         return trans.get(clbl, default_value).replace(" et al.", "+")  # " $\it{et~al.}$")
 
     def get_data_frame(self, exclude=None, exclude_in_col="label"):
