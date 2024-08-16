@@ -1,0 +1,4 @@
+# data taken from Table 3 in 
+# https://journals.aps.org/prc/abstract/10.1103/PhysRevC.97.044313
+label,rho0,E/A
+SeaLL1,0.154,-15.6

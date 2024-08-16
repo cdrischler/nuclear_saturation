@@ -1,9 +1,9 @@
 # A Bayesian mixture model approach to quantifying the _empirical_ nuclear saturation point
 
 <img align="right" width="240" src="./logo/logo_alternative.png">
-The nuclear equation of state (EOS) in the limit of isospin symmetric matter at zero-temperature exhibits a minimum at the so-called nuclear saturation point. We use a Bayesian approach with conjugate distributions to extract the *empirical* nuclear saturation point from a range of Density Functional Theory (DFT) constraints, including those from relativistic mean field (RMF) theory and Skyrme energy density functionals. 
+The nuclear equation of state (EOS) in the limit of isospin symmetric matter at zero temperature exhibits a minimum at the so-called nuclear saturation point. We use a Bayesian approach with conjugate distributions to extract the *empirical* nuclear saturation point from a range of Density Functional Theory (DFT) constraints, including those from relativistic mean field (RMF) theory and Skyrme energy density functionals. 
 
-This repository supplements our manuscript in preparation.
+This repository supplements our [manuscript][manuscript].
 
 We aim to provide statistically meaningful constraints on the nuclear saturation point to benchmark (and guide the construction of novel) microscopic interaction derived from chiral effective field theory (EFT). 
 
@@ -69,12 +69,14 @@ jupyter-notebook&
 Please use the following BibTeX entry to cite our work:
 
 ```bibtex
-@manual{saturationGitHub,
-  author = {Christian Drischler},
-  title = "{{Supplemental source code on GitHub}}",
-  year = "2023",
-  note = {\url{https://github.com/cdrischler/nuclear_saturation}},
-  url = {\mbox{https://github.com/cdrischler/nuclear_saturation}}
+@article{Drischler:2024ebw,
+    author = "Drischler, C. and Giuliani, P. G. and Bezoui, S. and Piekarewicz, J. and Viens, F.",
+    title = "{A Bayesian mixture model approach to quantifying the empirical nuclear saturation point}",
+    eprint = "2405.02748",
+    archivePrefix = "arXiv",
+    primaryClass = "nucl-th",
+    month = "5",
+    year = "2024"
 }
 ```
 
@@ -90,3 +92,5 @@ Frederi Viens (<fv15@rice.edu>)
 Department of Statistics   
 Rice University   
 Houston, TX 77005, USA   
+
+[manuscript]: https://inspirehep.net/literature/2783496

@@ -41,10 +41,14 @@ class DataSet(ABC):
             dutra_skyrme="Dutra et al. (\'12)",
             kortelainen="Kortelainen et al. (\'14)",
             brown="Brown (\'21)",
-            dutra_rmf="Dutra et al. (\'14)"
+            dutra_rmf="Dutra et al. (\'14)",
+            baldo_bcpm="Baldo et al. ",
+            bollapragada_fayans="Bollapragada et al.",
+            bulgac_SeaLL1="Bulgac et al.",
+            sellahewa_gogny="Sellahewa et al.",
+            zurek_abinitio="Zurek et al."
         )
-        default_value = clbl[0].upper()
-        default_value = default_value.replace("_", " ")
+        default_value = clbl.capitalize().replace("_", " ")
         return trans.get(clbl, default_value).replace(" et al.", "+")  # " $\it{et~al.}$")
 
     def get_data_frame(self, exclude=None, exclude_in_col="label"):

@@ -1,0 +1,15 @@
+﻿# taken from Table I in i
+# Roshan Sellahewa and Arnau Rios, Phys. Rev. C 90, 054327
+# https://journals.aps.org/prc/abstract/10.1103/PhysRevC.90.054327
+label,rho0,E/A
+D1,0.166,-16.30
+D1S,0.163,-16.01
+D1N,0.161,-15.96
+D1M,0.165,-16.02
+D1P,0.17,-15.25
+D1AS,0.166,-16.30
+D250,0.158,-15.84
+D260,0.16,-16.25
+D280,0.153,-16.33
+D300,0.156,-16.22
+GT2,0.161,-16.02
