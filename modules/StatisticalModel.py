@@ -413,7 +413,11 @@ class StatisticalModel:
             for row in axs[:, 0]:
                 row.set_xlim(0.13, 0.18)
 
-            axs[1, 1].set_xlim(-16.5, -15.00)
+            # use axis ranges consistently for joint posterior and marginal distribution
+            en_ylim = (-16.5, -15.2) 
+            axs[1, 0].set_ylim(*en_ylim)  
+            axs[1, 1].set_xlim(*en_ylim)  
+
             for elem in axs[1, :]:
                 elem.tick_params(axis='x', labelrotation = 45)
 

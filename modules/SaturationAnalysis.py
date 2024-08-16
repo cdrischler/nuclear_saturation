@@ -439,10 +439,11 @@ class SaturationAnalysis:
         # axs[1, 0].scatter(samples[names[0]], samples[names[1]], s=4, c=colors[4])  # avoid: a LOT of samples!
 
         for row in axs[:, 0]:
-            row.set_xlim(0.145, 0.175)
+            row.set_xlim(0.13, 0.18)
 
-        axs[1, 0].set_ylim(-16.5, -14.7)  # note that the axes are different
-        axs[1, 1].set_xlim(-16.5, -14.7)
+        en_ylim = (-16.5, -15.2) 
+        axs[1, 0].set_ylim(*en_ylim)  # note that the axes are different
+        axs[1, 1].set_xlim(*en_ylim)
 
         # fit bivariate t distribution to samples; only accurate for large numbers of sampling points
         from plot_helpers import fit_bivariate_t
@@ -454,7 +455,9 @@ class SaturationAnalysis:
             plot_confregion_bivariate_t(fit["mu"], fit["Psi"], fit["nu"],
                                         ax=axs[1, 0], alpha=levels, alpha_unit="decimal", num_pts=10000000,
                                         plot_scatter=False, validate=False, zorder=100)  # linestyle=":"
-            axs[1, 0].legend(ncol=2, title="confidence level (fit)", prop={'size': 6}, frameon=False)
+            axs[1, 0].legend(ncol=2, bbox_to_anchor=(2.04, 1.75),
+                             title="confidence level (fit)", 
+                             prop={'size': 6}, frameon=False)
 
         pdf_not_provided = type(pdf) != matplotlib.backends.backend_pdf.PdfPages
         if pdf_not_provided:
