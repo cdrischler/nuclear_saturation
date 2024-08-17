@@ -15,6 +15,7 @@ import time
 from multiprocessing import Pool, cpu_count, current_process
 from functools import partial
 
+__VERSION_NUMBER__ = 0.1
 
 __DEFAULT_DFT_CONSTRAINTS = [
     GenericDataSet(set_specifier="dutra_skyrme", filenames=["satpoints_dutra_skyrme.csv"]),
