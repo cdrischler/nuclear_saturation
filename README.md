@@ -1,7 +1,9 @@
 # A Bayesian mixture model approach to quantifying the _empirical_ nuclear saturation point
 
 <img align="right" width="240" src="./logo/logo_alternative.png">
-The nuclear equation of state (EOS) in the limit of isospin symmetric matter at zero temperature exhibits a minimum at the so-called nuclear saturation point. We use a Bayesian approach with conjugate distributions to extract the empirical nuclear saturation point from a range of Density Functional Theory (DFT) constraints, including those from relativistic mean field (RMF) theory and Skyrme energy density functionals. This repository supplements our [manuscript][manuscript].
+The nuclear equation of state (EOS) in the limit of isospin symmetric matter at zero temperature exhibits a minimum at the so-called nuclear saturation point. We use a Bayesian approach with conjugate distributions to extract the empirical nuclear saturation point from a range of Density Functional Theory (DFT) constraints, including those from relativistic mean field (RMF) theory and Skyrme energy density functionals. <\br>
+
+This repository supplements our [manuscript][manuscript].
 
 We aim to provide statistically meaningful constraints on the nuclear saturation point to benchmark (and guide the construction of novel) microscopic interaction derived from chiral effective field theory (EFT). 
 
