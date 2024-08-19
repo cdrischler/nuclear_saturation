@@ -1,9 +1,7 @@
 # A Bayesian mixture model approach to quantifying the _empirical_ nuclear saturation point
 
 <img align="right" width="240" src="./logo/logo_alternative.png">
-The nuclear equation of state (EOS) in the limit of isospin symmetric matter at zero temperature exhibits a minimum at the so-called nuclear saturation point. We use a Bayesian approach with conjugate distributions to extract the *empirical* nuclear saturation point from a range of Density Functional Theory (DFT) constraints, including those from relativistic mean field (RMF) theory and Skyrme energy density functionals. 
-
-This repository supplements our [manuscript][manuscript].
+The nuclear equation of state (EOS) in the limit of isospin symmetric matter at zero temperature exhibits a minimum at the so-called nuclear saturation point. We use a Bayesian approach with conjugate distributions to extract the empirical nuclear saturation point from a range of Density Functional Theory (DFT) constraints, including those from relativistic mean field (RMF) theory and Skyrme energy density functionals. This repository supplements our [manuscript][manuscript].
 
 We aim to provide statistically meaningful constraints on the nuclear saturation point to benchmark (and guide the construction of novel) microscopic interaction derived from chiral effective field theory (EFT). 
 
@@ -21,21 +19,21 @@ The following Jupyter notebooks are included:
 * `analysis_conjugate_priors.ipynb`: performs the conjugate prior analysis presented in the manuscript. The notebook supports parallel computing. Downloading the samples from Giuliani et al. requires an internet connection and might take a while to finish. This has to be done only once.
 * `tutorial_conf_regions.ipynb`: provides a tutorial on plotting confidence regions of the t-distribution using the tools developed.
 * `sample_SV_L.ipynb`: derives constraints on the nuclear symmetry energy parameters $(S_v,L)$ from chiral EFT calculations in pure neutron matter combined with empirical constraints on the nuclear saturation point. It requires and interfaces with the public BUQEYE GitHub repository containing their [nuclear matter analysis](https://github.com/buqeye/nuclear-matter-convergence).
-* `tests.py` defines several unit test (see below)
+* `tests.py` defines several unit tests (see below)
 
-In addition, `saturation_analysis_mc.ipynb` provides an independent implementation of our saturation analysis using brute-force Monte Carlo sampling. It could be used to check and generalize our analysis using conjugate priors. Another virtual environment with packages specified in `requirements_mc.txt` needs to be installed following the instructions above. This notebook was _not_ used in our manuscript.
+In addition, `saturation_analysis_mc.ipynb` provides an independent implementation of our saturation analysis using brute-force Monte Carlo sampling. It could be used to check and generalize our analysis using conjugate priors. Another virtual environment with packages specified in `requirements_mc.txt` needs to be installed following the instructions above. This notebook was _not_ used in our manuscript. It is provided without support.
 
 
-## Installation
+## Installation and testing
 
-Follow these steps to run the code locally in a virtual environment using a Jupyter notebook:
+Follow these steps to run the code locally in a virtual environment using a Jupyter Notebook:
 
 ```shell
 python3 -m venv env_satpoint
 source env_satpoint/bin/activate
 python3 -m pip install -r requirements_conj.txt
 python3 -m ipykernel install --name "satpoint"
-jupyter-notebook&
+jupyter-notebook&  # pick the kernel "satpoint"
 # deactivate # when the job is done
 ```
 
@@ -50,19 +48,20 @@ Run the following `pytest` command to test important components of the code (may
 pytest pytest tests.py
 ```
 
-### Optional: Brute-force Monte Carlo appraoch
+### Optional: Brute-force Monte Carlo approach
 
-To run `saturation_analysis_mc.ipynb`, you will need a different virtual environment due to inter-package incompabilities:
+Optionally, to run `saturation_analysis_mc.ipynb`, you will need a different virtual environment due to inter-package incompatibilities:
 
 ```shell
 python3 -m venv env_satpoint_mc
 source env_satpoint_mc/bin/activate
 python3 -m pip install -r requirements_mc.txt
 python3 -m ipykernel install --name "satpoint_mc"
-jupyter-notebook&
+jupyter-notebook&  # pick the kernel "satpoint_mc"
 # deactivate # when the job is done
 ```
 
+This notebook was _not_ used in our manuscript. It is provided without support for instructional purposes.
 
 ## Cite this work
 
