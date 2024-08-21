@@ -80,7 +80,6 @@ six==1.16.0
 stack-data==0.6.3
 tables==3.9.2
 texttable==1.7.0
-Theano-PyMC==1.1.2
 threadpoolctl==3.4.0
 toolz==0.12.1
 tornado==6.4
