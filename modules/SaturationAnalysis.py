@@ -28,11 +28,11 @@ __DEFAULT_DFT_CONSTRAINTS = [
     KernelDensityEstimate(set_specifier="schunck"),
     KernelDensityEstimate(set_specifier="giuliani"),
     # additional data sets, not Skyrme or RMF models
-    GenericDataSet(set_specifier="baldo_bcpm", filenames=["satpoints_baldo_bcpm.csv"]),
-    GenericDataSet(set_specifier="bollapragada_fayans", filenames=["satpoints_bollapragada_fayans.csv"]),
-    GenericDataSet(set_specifier="bulgac_SeaLL1", filenames=["satpoints_bulgac_SeaLL1.csv"]),
-    GenericDataSet(set_specifier="sellahewa_gogny", filenames=["satpoints_sellahewa_gogny.csv"]),
-    GenericDataSet(set_specifier="zurek_abinitio", filenames=["satpoints_zurek_abinitio.csv"]),
+    # GenericDataSet(set_specifier="baldo_bcpm", filenames=["satpoints_baldo_bcpm.csv"]),
+    # GenericDataSet(set_specifier="bollapragada_fayans", filenames=["satpoints_bollapragada_fayans.csv"]),
+    # GenericDataSet(set_specifier="bulgac_SeaLL1", filenames=["satpoints_bulgac_SeaLL1.csv"]),
+    # GenericDataSet(set_specifier="sellahewa_gogny", filenames=["satpoints_sellahewa_gogny.csv"]),
+    # GenericDataSet(set_specifier="zurek_abinitio", filenames=["satpoints_zurek_abinitio.csv"]),
 ]
 DEFAULT_DFT_CONSTRAINTS = {elem.set_specifier: elem for elem in __DEFAULT_DFT_CONSTRAINTS}
 
