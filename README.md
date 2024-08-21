@@ -39,7 +39,11 @@ jupyter-notebook&  # pick the kernel "satpoint"
 # deactivate # when the job is done
 ```
 
-You may need to specify the HDF5 directory, e.g., using the environment variable 
+You may need to install `HDF5`. On a Mac Computer with `homebrew`, this can be done via:
+```shell
+brew install hdf5
+```
+You may also need to specify the HDF5 directory, e.g., using the environment variable 
 ```shell
 export HDF5_DIR=/opt/homebrew/Cellar/hdf5/1.14.1  # the location may be different on your computer
 ```
