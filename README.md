@@ -47,7 +47,7 @@ export HDF5_DIR=/opt/homebrew/Cellar/hdf5/1.14.1  # the location may be differen
 Run the following `pytest` command to test important components of the code (may take a while):
 
 ```shell
-pytest pytest tests.py
+python3 -m pytest tests.py
 ```
 
 ### Optional: Brute-force Monte Carlo approach
