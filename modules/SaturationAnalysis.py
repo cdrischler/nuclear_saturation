@@ -26,21 +26,46 @@ __DEFAULT_DFT_CONSTRAINTS = [
     NormDistDataSet(set_specifier="reinhard"),
     KernelDensityEstimate(set_specifier="mcdonnell"),
     KernelDensityEstimate(set_specifier="schunck"),
-    KernelDensityEstimate(set_specifier="giuliani"),
-    # additional data sets, not Skyrme or RMF models
-    # GenericDataSet(set_specifier="baldo_bcpm", filenames=["satpoints_baldo_bcpm.csv"]),
-    # GenericDataSet(set_specifier="bollapragada_fayans", filenames=["satpoints_bollapragada_fayans.csv"]),
-    # GenericDataSet(set_specifier="bulgac_SeaLL1", filenames=["satpoints_bulgac_SeaLL1.csv"]),
-    # GenericDataSet(set_specifier="sellahewa_gogny", filenames=["satpoints_sellahewa_gogny.csv"]),
-    # GenericDataSet(set_specifier="zurek_abinitio", filenames=["satpoints_zurek_abinitio.csv"]),
+    KernelDensityEstimate(set_specifier="giuliani")
 ]
 DEFAULT_DFT_CONSTRAINTS = {elem.set_specifier: elem for elem in __DEFAULT_DFT_CONSTRAINTS}
+
+# additional data sets, not Skyrme or RMF models
+__ADDITIONAL_DFT_CONSTRAINTS = [
+    GenericDataSet(set_specifier="baldo_bcpm", filenames=["satpoints_baldo_bcpm.csv"]),
+    GenericDataSet(set_specifier="sellahewa_gogny", filenames=["satpoints_sellahewa_gogny.csv"]),
+    GenericDataSet(set_specifier="bulgac_SeaLL1", filenames=["satpoints_bulgac_SeaLL1.csv"]),
+    GenericDataSet(set_specifier="bollapragada_fayans", filenames=["satpoints_bollapragada_fayans.csv"])
+    # GenericDataSet(set_specifier="zurek_abinitio", filenames=["satpoints_zurek_abinitio.csv"])
+]
+ADDITIONAL_DFT_CONSTRAINTS = {elem.set_specifier: elem for elem in __ADDITIONAL_DFT_CONSTRAINTS}
+ALL_DFT_CONSTRAINTS = {elem.set_specifier: elem for elem in __DEFAULT_DFT_CONSTRAINTS + __ADDITIONAL_DFT_CONSTRAINTS}
 
 drischler_satbox = GenericDataSet(
     set_specifier="drischler_satbox",
     filenames=["satpoints_dutra_skyrme.csv", "satpoints_kortelainen.csv"]
 )
 # drischler_satbox = DEFAULT_DFT_CONSTRAINTS["dutra_skyrme"] + DEFAULT_DFT_CONSTRAINTS["kortelainen"]
+
+addon_satbox = GenericDataSet(
+    set_specifier="addon_satbox",
+    filenames=["satpoints_baldo_bcpm.csv",
+               "satpoints_bollapragada_fayans.csv",
+               "satpoints_bulgac_SeaLL1.csv",
+               "satpoints_sellahewa_gogny.csv"
+               ]
+)
+
+extended_satbox = GenericDataSet(
+    set_specifier="extended_satbox",
+    filenames=["satpoints_dutra_skyrme.csv", 
+               "satpoints_kortelainen.csv",
+               "satpoints_baldo_bcpm.csv",
+               "satpoints_bollapragada_fayans.csv",
+               "satpoints_bulgac_SeaLL1.csv",
+               "satpoints_sellahewa_gogny.csv"
+               ]
+)
 
 scenario1 = Scenario(
     label="fsu-only",
@@ -89,8 +114,8 @@ class SaturationAnalysis:
             from modules.EftPredictions import EftPredictions
             self.eft_predictions = EftPredictions(show_result=True)
 
-    def plot_constraints(self, dft_constraints=None, eft=False, dft_conf_level=0.95,
-                         eft_conf_level=0.95, eft_plot_scatter=True, add_svm=True):
+    def plot_constraints(self, dft_constraints=None, eft=False, dft_conf_level=0.95, filename_postfix=None,
+                         eft_conf_level=0.95, eft_plot_scatter=True, add_svm=True, annotate_dft_labels=True, ylim=None):
         """
         plots `dft_constraints` if not None otherwise plots default DFT constraints and 
         EFT constraints if requested (EFT-DFT comparison figure)
@@ -100,23 +125,30 @@ class SaturationAnalysis:
         dft_constraints: to-be-plotted DFT constraints (default constraints will be used if none)
         eft: toggle whether to plot EFT constraints
         dft_conf_level: confidence level at which to plot DFT constraints
+        filename_postfix: postfix use to construct the output pdf filename: constaints<postfix>.pdf 
         eft_conf_level: confidence level at which to plot EFT constraints
         eft_plot_scatter: plot all EFT constraints
         add_svm: train and plot support vector machine classifier
+        annotate_dft_labels: switch annotations "Skyrme" and "RMF" on/off
+        ylim: sets matplotlib's `ylim` for the plot if specified: has to be the tuple (lower limit, upper limit)
         """
-        pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.pdf_output_path}/constraints.pdf")
+        filename_postfix = "" if filename_postfix is None else filename_postfix
+        pdf = matplotlib.backends.backend_pdf.PdfPages(f"{self.pdf_output_path}/constraints{filename_postfix}.pdf")
         fig, ax = plt.subplots(1, 1, figsize=(1.25*6.8*cm, 1.3*6.8*cm))
         self.drischler_satbox.plot(ax=ax, plot_scatter=False, plot_box_estimate=True, marker_size=8,
                                    place_legend=False, add_axis_labels=False, exclude=None)
 
         dft_constraints = DEFAULT_DFT_CONSTRAINTS if dft_constraints is None else dft_constraints
         additional_legend_handles = []
-        ax.text(0.72, 0.40, 'Skyrme', horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
-        ax.text(0.15, 0.35, 'RMF', horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+        if annotate_dft_labels:
+            ax.text(0.72, 0.40, 'Skyrme', horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
+            ax.text(0.15, 0.35, 'RMF', horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
         for key, val in dft_constraints.items():
             handles = val.plot(ax=ax, level=dft_conf_level, additional_legend_handles=additional_legend_handles)
             if handles is not None:
                 additional_legend_handles.append(handles)
+            if isinstance(ylim, tuple):
+                ax.set_ylim(*ylim)
             pdf.savefig(fig)
         if eft:
             if self.eft_predictions is None:

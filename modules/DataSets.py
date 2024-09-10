@@ -42,11 +42,11 @@ class DataSet(ABC):
             kortelainen="Kortelainen et al. (\'14)",
             brown="Brown (\'21)",
             dutra_rmf="Dutra et al. (\'14)",
-            baldo_bcpm="Baldo et al. ",
-            bollapragada_fayans="Bollapragada et al.",
-            bulgac_SeaLL1="Bulgac et al.",
-            sellahewa_gogny="Sellahewa et al.",
-            zurek_abinitio="Zurek et al."
+            baldo_bcpm="Baldo et al. (\'12)",
+            bollapragada_fayans="Bollapragada et al. (\'20)",
+            bulgac_SeaLL1="Bulgac et al. (\'17)",
+            sellahewa_gogny="Sellahewa et al. (\'14)",
+            zurek_abinitio="Zurek et al. (\'24)"
         )
         default_value = clbl.capitalize().replace("_", " ")
         return trans.get(clbl, default_value).replace(" et al.", "+")  # " $\it{et~al.}$")

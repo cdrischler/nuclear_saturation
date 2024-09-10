@@ -104,6 +104,7 @@ def set_ax_title(ax, prior_set_lbl, res_lbl):
     humanize_label = {
         "satbox": "Dutra+ (\'12) \& Kortelainen+",
         "satbox_wo_SQMC700": "Dutra+$^*$ (\'12) \&  Kortelainen+",
+        "extended_satbox": "Extended Saturation Box",
         "Skyrme-only": "Skyrme-only",
         "all-but-fsu": "Skyrme+RMF"
     }
