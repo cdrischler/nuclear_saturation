@@ -20,7 +20,7 @@ __VERSION_NUMBER__ = 0.1
 __DEFAULT_DFT_CONSTRAINTS = [
     GenericDataSet(set_specifier="dutra_skyrme", filenames=["satpoints_dutra_skyrme.csv"]),
     GenericDataSet(set_specifier="kortelainen", filenames=["satpoints_kortelainen.csv"]),
-    GenericDataSet(set_specifier="brown", filenames=["brown/satpoints_brown.csv"]),
+    GenericDataSet(set_specifier="brown", filenames=["Brown/satpoints_brown.csv"]),
     GenericDataSet(set_specifier="dutra_rmf", filenames=["satpoints_dutra_rmf.csv"]),
     NormDistDataSet(set_specifier="fsu_rmf"),
     NormDistDataSet(set_specifier="reinhard"),
