@@ -453,6 +453,14 @@ class KernelDensityEstimate(DataSet):
         if df is not None:
             ret = pd.concat((df, ret))
         return ret
+    
+    @property
+    def correlation_coeff(self):
+        """
+        computes the Pearson correlation coefficient of the data
+        """
+        cov = np.cov([self.data_frame["rho0"], self.data_frame["E/A"]])
+        return cov[0,1] / np.sqrt(cov[0,0]*cov[1,1])
 
     def plot(self, ax=None, level=0.95, fill=False, plot_scatter=False, marker_size=8,
              add_legend=True, add_axis_labels=True, exclude=None, use_seaborn=True, **kwargs):
