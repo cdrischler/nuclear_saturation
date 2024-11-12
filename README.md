@@ -76,11 +76,15 @@ Please use the following BibTeX entry to cite our work:
 ```bibtex
 @article{Drischler:2024ebw,
     author = "Drischler, C. and Giuliani, P. G. and Bezoui, S. and Piekarewicz, J. and Viens, F.",
-    title = "{A Bayesian mixture model approach to quantifying the empirical nuclear saturation point}",
+    title = "{Bayesian mixture model approach to quantifying the empirical nuclear saturation point}",
     eprint = "2405.02748",
     archivePrefix = "arXiv",
     primaryClass = "nucl-th",
-    month = "5",
+    doi = "10.1103/PhysRevC.110.044320",
+    journal = "Phys. Rev. C",
+    volume = "110",
+    number = "4",
+    pages = "044320",
     year = "2024"
 }
 ```
